@@ -1,9 +1,9 @@
+import Header from "../../../componets/header";
+import SideNav from "../../../componets/side-nav";
+import PayrollTable from "../../../componets/payroll/table"
 
-import Header from '../../componets/header';
-import SideNav from '../../componets/side-nav';
-import CorporateDashboard from "../../componets/dashboard/graphs"
-export default function Home() {
-  return (
+export default function Payroll(){
+    return (
         <div className="flex flex-col h-screen">
             {/* Top Header */}
             <Header />
@@ -17,7 +17,7 @@ export default function Home() {
 
                 {/* Main Content */}
                 <main className="flex-1 p-6 bg-white overflow-y-auto">
-                    <CorporateDashboard/>
+                    <PayrollTable/>
                 </main>
             </div>
         </div>
