@@ -40,7 +40,7 @@ const SideNav = () => {
                 </a>
             </li>
             <li>
-                <a href="javascript:void(0)"
+                <a href="/products"
                     className="text-slate-800 font-medium hover:text-slate-900 hover:bg-white-200 text-[15px] flex items-center rounded px-4 py-2 transition-all">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="w-[18px] h-[18px] mr-3"
                         viewBox="0 0 24 24">
