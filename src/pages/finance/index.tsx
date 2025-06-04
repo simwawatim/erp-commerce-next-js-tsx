@@ -1,9 +1,9 @@
 import Header from "../../../componets/header";
 import SideNav from "../../../componets/side-nav";
-import SalesTable from "../../../componets/sales/tables"
+import FinanceTable from "../../../componets/finance/table"
 
-export default function Sales() {
-     return (
+export default function Finance (){
+    return (
         <div className="flex flex-col h-screen">
             {/* Top Header */}
             <Header />
@@ -17,7 +17,7 @@ export default function Sales() {
 
                 {/* Main Content */}
                 <main className="flex-1 p-6 bg-white overflow-y-auto">
-                    <SalesTable />
+                    <FinanceTable />
                 </main>
             </div>
         </div>
