@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell,
@@ -16,11 +17,29 @@ const CorporateDashboard = () => {
   const [payrollData, setPayrollData] = useState<PayrollDatum[]>([]);
   const [financeData, setFinanceData] = useState<FinanceDatum[]>([]);
 
+  const [totalRevenue, setTotalRevenue] = useState<number | null>(null);
+  const [totalExpenses, setTotalExpenses] = useState<number | null>(null);
+  const [totalProfit, setTotalProfit] = useState<number | null>(null);
+
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
   useEffect(() => {
-    // Simulate async fetch
-    setTimeout(() => {
+    const fetchData = async () => {
+      try {
+        const [revRes, expRes, profRes] = await Promise.all([
+          axios.get('http://127.0.0.1:8000/api/financial/revenue/'),
+          axios.get('http://127.0.0.1:8000/api/financial/expenses/'),
+          axios.get('http://127.0.0.1:8000/api/financial/profit/')
+        ]);
+
+        setTotalRevenue(revRes.data.revenue);
+        setTotalExpenses(expRes.data.expenses);
+        setTotalProfit(profRes.data.profit);
+      } catch (error) {
+        console.error('Error fetching financial summary:', error);
+      }
+
+      // Simulate chart data loading (replace with real data if needed)
       setRevenueData([
         { name: 'Jan', sales: 4000, services: 2400 },
         { name: 'Feb', sales: 3000, services: 1398 },
@@ -47,7 +66,9 @@ const CorporateDashboard = () => {
       ]);
 
       setLoading(false);
-    }, 1500);
+    };
+
+    fetchData();
   }, []);
 
   const renderSkeletonCard = () => (
@@ -57,6 +78,11 @@ const CorporateDashboard = () => {
   const renderSkeletonChart = () => (
     <div className="bg-gray-100 animate-pulse p-4 rounded-lg shadow h-[300px]"></div>
   );
+
+  const formatKwacha = (value: number | null) =>
+    value !== null
+      ? new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW', minimumFractionDigits: 0 }).format(value)
+      : 'K0';
 
   return (
     <div className="p-6">
@@ -73,19 +99,19 @@ const CorporateDashboard = () => {
           <>
             <div className="bg-blue-50 p-4 rounded-lg shadow">
               <h3 className="text-sm font-medium text-blue-800">Total Revenue</h3>
-              <p className="text-2xl font-semibold text-blue-600">K124,560</p>
+              <p className="text-2xl font-semibold text-blue-600">{formatKwacha(totalRevenue)}</p>
               <p className="text-green-600 text-sm mt-1">↑ 12% vs last quarter</p>
             </div>
 
             <div className="bg-green-50 p-4 rounded-lg shadow">
               <h3 className="text-sm font-medium text-green-800">Total Expenses</h3>
-              <p className="text-2xl font-semibold text-green-600">K78,340</p>
+              <p className="text-2xl font-semibold text-green-600">{formatKwacha(totalExpenses)}</p>
               <p className="text-red-600 text-sm mt-1">↑ 5% vs last quarter</p>
             </div>
 
             <div className="bg-purple-50 p-4 rounded-lg shadow">
               <h3 className="text-sm font-medium text-purple-800">Net Profit</h3>
-              <p className="text-2xl font-semibold text-purple-600">K46,220</p>
+              <p className="text-2xl font-semibold text-purple-600">{formatKwacha(totalProfit)}</p>
               <p className="text-green-600 text-sm mt-1">↑ 24% vs last quarter</p>
             </div>
           </>
