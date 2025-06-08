@@ -1,174 +1,392 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
+interface Product {
+  id: number;
+  image?: string | null;
+  name: string;
+  description?: string | null;
+  is_available: boolean;
+  quantity: number;
+  cost_per_unit: number;
+  created_at: string;
+  updated_at: string;
+  // created_by and updated_by are omitted here for simplicity
+}
+
+const PLACEHOLDER_IMAGE = 'https://res.cloudinary.com/demo/image/upload/v1689803100/ai/hiker.jpg';
 
 const ProductsTable = () => {
-  const [currentPage, setCurrentPage] = React.useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  const [newProduct, setNewProduct] = useState<Partial<Product>>({
+    name: '',
+    description: '',
+    is_available: true,
+    quantity: 0,
+    cost_per_unit: 0,
+  });
+
   const rowsPerPage = 2;
 
-  const projects = [
-    {
-      id: 1,
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=100',
-      name: 'Project Alpha',
-      description: 'First release of the product.',
-      isAvailable: true,
-      quantity: 50,
-      createdBy: 'Alice',
-      createdAt: '2023-01-15',
-      updatedBy: 'Bob',
-      updatedAt: '2023-03-01',
-    },
-    {
-      id: 2,
-      image: 'https://images.unsplash.com/photo-1555774698-0b77e0d5fac6?w=100',
-      name: 'Project Beta',
-      description: 'Internal tool for automation.',
-      isAvailable: false,
-      quantity: 20,
-      createdBy: 'Charlie',
-      createdAt: '2023-02-10',
-      updatedBy: 'Dana',
-      updatedAt: '2023-04-10',
-    },
-    {
-      id: 3,
-      image: 'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=100',
-      name: 'Project Gamma',
-      description: 'Beta testing program.',
-      isAvailable: true,
-      quantity: 100,
-      createdBy: 'Eve',
-      createdAt: '2023-03-22',
-      updatedBy: 'Frank',
-      updatedAt: '2023-05-01',
-    },
-    {
-      id: 4,
-      image: 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=100',
-      name: 'Project Delta',
-      description: 'Customer portal redesign.',
-      isAvailable: true,
-      quantity: 75,
-      createdBy: 'Grace',
-      createdAt: '2023-04-05',
-      updatedBy: 'Henry',
-      updatedAt: '2023-06-15',
-    },
-  ];
+  useEffect(() => {
+    fetchProducts();
+  }, [currentPage]);
 
-  const totalPagesCalculated = Math.ceil(projects.length / rowsPerPage);
-
-  const indexOfLastRow = currentPage * rowsPerPage;
-  const indexOfFirstRow = indexOfLastRow - rowsPerPage;
-  const currentRows = projects.slice(indexOfFirstRow, indexOfLastRow);
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPagesCalculated) {
-      setCurrentPage(page);
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get<Product[]>('http://127.0.0.1:8000/api/products/');
+      if (Array.isArray(response.data)) {
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const paginatedProducts = response.data.slice(startIndex, startIndex + rowsPerPage);
+        setProducts(paginatedProducts);
+        setTotalPages(Math.ceil(response.data.length / rowsPerPage));
+      } else {
+        setProducts([]);
+        setTotalPages(1);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setProducts([]);
+      setTotalPages(1);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getStatusBadge = (isAvailable: boolean) => {
-    return isAvailable ? (
-      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-        Available
-      </span>
-    ) : (
-      <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-        Unavailable
-      </span>
-    );
+  const handleDelete = async (id: number) => {
+    try {
+      await axios.delete(`http://127.0.0.1:8000/api/products/${id}/`);
+      await fetchProducts();
+    } catch (error) {
+      console.error('Error deleting product:', error);
+    }
   };
 
+  const handleUpdate = async (product: Product) => {
+    try {
+      const response = await axios.put(`http://127.0.0.1:8000/api/products/${product.id}/`, product);
+      setProducts(products.map(p => (p.id === product.id ? response.data : p)));
+      setEditingProduct(null);
+    } catch (error) {
+      console.error('Error updating product:', error);
+    }
+  };
+
+  const handleCreate = async () => {
+    try {
+      if (!newProduct.name) {
+        alert('Please enter a Name');
+        return;
+      }
+
+      const payload = {
+        name: newProduct.name,
+        description: newProduct.description || '',
+        is_available: newProduct.is_available ?? true,
+        quantity_on_hand: Number(newProduct.quantity) || 0,
+        cost_per_unit: Number(newProduct.cost_per_unit) || 0,
+      };
+
+      await axios.post('http://127.0.0.1:8000/api/products/', payload);
+      setCurrentPage(1);
+      await fetchProducts();
+      setIsCreateModalOpen(false);
+      setNewProduct({
+        name: '',
+        description: '',
+        is_available: true,
+        quantity: 1,
+        cost_per_unit: 1,
+      });
+    } catch (error) {
+      console.error('Error creating product:', error);
+      alert('Failed to create product. Check console for details.');
+    }
+  };
+
+  const getStatusBadge = (isAvailable: boolean) =>
+    isAvailable ? (
+      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Available</span>
+    ) : (
+      <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">Unavailable</span>
+    );
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
+  };
+
+  const formatKwacha = (value?: number | null) =>
+    typeof value === 'number' && !isNaN(value) ? `K${value.toFixed(2)}` : 'K0.00';
+
+  const formatDate = (dateStr: string) =>
+    new Date(dateStr).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full bg-white">
-        <thead className="bg-gray-100 whitespace-nowrap">
+    <div className="overflow-x-auto p-4 bg-gray-50 rounded shadow">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-semibold text-gray-800">Products</h2>
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+        >
+          Add Product
+        </button>
+      </div>
+
+      <table className="min-w-full bg-white rounded shadow-sm overflow-hidden">
+        <thead className="bg-gray-200 text-gray-700">
           <tr>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Image</th>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Name</th>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Description</th>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Status</th>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Quantity</th>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Created By</th>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Created Date</th>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Updated By</th>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Updated Date</th>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Actions</th>
+            {['Image', 'Name', 'Description', 'Status', 'Quantity', 'Cost', 'Created', 'Updated', 'Actions'].map(col => (
+              <th key={col} className="p-3 text-left text-sm font-medium">
+                {col}
+              </th>
+            ))}
           </tr>
         </thead>
-        <tbody className="whitespace-nowrap">
-          {currentRows.map((project) => (
-            <tr key={project.id} className="hover:bg-gray-50">
-              <td className="p-4">
-                <img 
-                  src={project.image} 
-                  alt={project.name} 
-                  className="w-10 h-10 object-cover rounded"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40';
-                  }}
-                />
-              </td>
-              <td className="p-4 text-slate-900 font-medium">{project.name}</td>
-              <td className="p-4 text-slate-600 max-w-xs truncate">{project.description}</td>
-              <td className="p-4">
-                {getStatusBadge(project.isAvailable)}
-              </td>
-              <td className="p-4 text-slate-600">{project.quantity}</td>
-              <td className="p-4 text-slate-600">{project.createdBy}</td>
-              <td className="p-4 text-slate-600">{project.createdAt}</td>
-              <td className="p-4 text-slate-600">{project.updatedBy}</td>
-              <td className="p-4 text-slate-600">{project.updatedAt}</td>
-              <td className="p-4 flex space-x-2">
-                <button className="text-blue-500 hover:text-blue-700" title="Edit">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19.3 8.925l-4.25-4.2 1.4-1.4q.575-.575 1.413-.575.837 0 1.412.575l1.4 1.4q.575.575.6 1.388.025.812-.55 1.387ZM4 21q-.425 0-.712-.288Q3 20.425 3 20v-2.825q0-.2.075-.387.075-.188.225-.338l10.3-10.3 4.25 4.25-10.3 10.3q-.15.15-.337.225-.188.075-.388.075Zm14.775-12.85l-4.25-4.2 1.4-1.4q.575-.575 1.413-.575.837 0 1.412.575l1.4 1.4q.575.575.6 1.388.025.812-.55 1.387Z"/>
-                  </svg>
-                </button>
-                <button className="text-red-500 hover:text-red-700" title="Delete">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M7 21q-.825 0-1.412-.587Q5 19.825 5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413Q17.825 21 17 21ZM17 6H7v13h10ZM9 17h2V8H9Zm4 0h2V8h-2ZM7 6v13Z"/>
-                  </svg>
-                </button>
+        <tbody>
+          {products.length === 0 ? (
+            <tr>
+              <td colSpan={9} className="text-center py-6 text-gray-500">
+                No products found.
               </td>
             </tr>
-          ))}
+          ) : (
+            products.map(product => (
+              <tr key={product.id} className="hover:bg-gray-100">
+                <td className="p-3 align-middle">
+                  <img
+                    src={product.image || PLACEHOLDER_IMAGE}
+                    alt={product.name}
+                    className="w-12 h-12 rounded object-cover"
+                    onError={e => ((e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE)}
+                  />
+                </td>
+                <td className="p-3 align-middle font-semibold text-gray-900">
+                  {editingProduct?.id === product.id ? (
+                    <input
+                      type="text"
+                      value={editingProduct.name}
+                      onChange={e => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                      className="border border-gray-300 rounded px-2 py-1 w-full"
+                    />
+                  ) : (
+                    product.name
+                  )}
+                </td>
+                <td
+                  className="p-3 align-middle text-gray-700 max-w-xs truncate"
+                  title={product.description || ''}
+                >
+                  {editingProduct?.id === product.id ? (
+                    <textarea
+                      value={editingProduct.description || ''}
+                      onChange={e => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                      className="border border-gray-300 rounded px-2 py-1 w-full resize-none"
+                      rows={2}
+                    />
+                  ) : (
+                    product.description || '—'
+                  )}
+                </td>
+                <td className="p-3 align-middle">
+                  {editingProduct?.id === product.id ? (
+                    <select
+                      value={editingProduct.is_available ? 'true' : 'false'}
+                      onChange={e => setEditingProduct({ ...editingProduct, is_available: e.target.value === 'true' })}
+                      className="border border-gray-300 rounded px-2 py-1"
+                    >
+                      <option value="true">Available</option>
+                      <option value="false">Unavailable</option>
+                    </select>
+                  ) : (
+                    getStatusBadge(product.is_available)
+                  )}
+                </td>
+                <td className="p-3 align-middle text-center">
+                  {editingProduct?.id === product.id ? (
+                    <input
+                      type="number"
+                      min={0}
+                      value={editingProduct.quantity}
+                      onChange={e => setEditingProduct({ ...editingProduct, quantity: Number(e.target.value) })}
+                      className="border border-gray-300 rounded px-2 py-1 w-20 text-center"
+                    />
+                  ) : (
+                    product.quantity
+                  )}
+                </td>
+                <td className="p-3 align-middle text-right font-mono">
+                  {editingProduct?.id === product.id ? (
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={editingProduct.cost_per_unit}
+                      onChange={e => setEditingProduct({ ...editingProduct, cost_per_unit: Number(e.target.value) })}
+                      className="border border-gray-300 rounded px-2 py-1 w-28 text-right"
+                    />
+                  ) : (
+                    formatKwacha(product.cost_per_unit)
+                  )}
+                </td>
+                <td className="p-3 align-middle text-center text-sm text-gray-500">{formatDate(product.created_at)}</td>
+                <td className="p-3 align-middle text-center text-sm text-gray-500">{formatDate(product.updated_at)}</td>
+                <td className="p-3 align-middle text-right space-x-2 whitespace-nowrap">
+                {editingProduct?.id === product.id ? (
+                  <>
+                    <button
+                      onClick={() => editingProduct && handleUpdate(editingProduct)}
+                      className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingProduct(null)}
+                      className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400 transition"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setEditingProduct(product)}
+                      className="px-3 py-1 bg-yellow-400 rounded hover:bg-yellow-500 transition"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(product.id)}
+                      className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition"
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
+              </td>
+
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
 
-      <div className="flex justify-between items-center mt-4 text-sm">
-        <p className="text-slate-600">
-          Page {currentPage} of {totalPagesCalculated}
-        </p>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-          >
-            Previous
-          </button>
-          {Array.from({ length: totalPagesCalculated }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => handlePageChange(i + 1)}
-              className={`px-3 py-1 rounded ${currentPage === i + 1
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 hover:bg-gray-300'
-                }`}
-            >
-              {i + 1}
-            </button>
-          ))}
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPagesCalculated}
-            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
+      {/* Pagination */}
+      <div className="mt-6 flex justify-center items-center space-x-4 text-gray-700">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-100 transition"
+        >
+          Prev
+        </button>
+        <span>
+          Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+        </span>
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-100 transition"
+        >
+          Next
+        </button>
       </div>
+
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 flex justify-center items-center z-50 backdrop-blur-sm bg-white/30">
+          <div className="bg-white rounded-lg p-6 max-w-lg w-full shadow-lg min-h-[600px] overflow-y-auto">
+          
+            <div className="space-y-6 max-w-md mx-auto">
+              <input
+                type="text"
+                placeholder="Name *"
+                required
+                value={newProduct.name || ''}
+                onChange={e => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
+                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
+              />
+              <textarea
+                placeholder="Description *"
+                required
+                value={newProduct.description || ''}
+                onChange={e => setNewProduct(prev => ({ ...prev, description: e.target.value }))}
+                className="w-full border border-gray-300 rounded px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
+                rows={4}
+              />
+              <label className="inline-flex items-center space-x-2 max-w-md">
+                <input
+                  type="checkbox"
+                  checked={newProduct.is_available ?? true}
+                  onChange={e => setNewProduct(prev => ({ ...prev, is_available: e.target.checked }))}
+                  className="form-checkbox h-5 w-5 text-blue-600"
+                />
+                <span>Available</span>
+              </label>
+              <input
+                type="number"
+                min={1}
+                required
+                placeholder="Quantity On Hand *"
+                value={newProduct.quantity|| ''}
+                onChange={e =>
+                  setNewProduct(prev => ({
+                    ...prev,
+                    quantity_on_hand: e.target.value ? Number(e.target.value) : undefined
+                  }))
+                }
+                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
+              />
+              <input
+                type="number"
+                min={0.01}
+                step="0.01"
+                required
+                placeholder="Cost Per Unit (Kwacha) *"
+                value={newProduct.cost_per_unit || ''}
+                onChange={e =>
+                  setNewProduct(prev => ({
+                    ...prev,
+                    cost_per_unit: e.target.value ? Number(e.target.value) : undefined
+                  }))
+                }
+                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
+              />
+            </div>
+
+            <div className="mt-8 flex justify-end space-x-4 max-w-md mx-auto">
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="px-4 py-2 border border-red-700 bg-red-600 text-white rounded hover:bg-red-700 transition"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleCreate}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
