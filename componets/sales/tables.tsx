@@ -1,199 +1,223 @@
+import axios from 'axios';
 import React from 'react';
 
+interface Sale {
+  id: number;
+  name: string;
+  quantity: number;
+  price: number;
+  date_ordered: string;
+}
+
 const SalesTable = () => {
+  const [salesData, setSalesData] = React.useState<Sale[]>([]);
   const [currentPage, setCurrentPage] = React.useState(1);
   const rowsPerPage = 5;
 
-  const salesData = [
-    {
-      id: 1,
-      product: 'Wireless Headphones',
-      customer: 'John Smith',
-      date: '2023-06-15',
-      quantity: 2,
-      unitPrice: 129.99,
-      revenue: 259.98,
-      paymentMethod: 'Credit Card',
-      status: 'Completed'
-    },
-    {
-      id: 2,
-      product: 'Smart Watch',
-      customer: 'Sarah Johnson',
-      date: '2023-06-14',
-      quantity: 1,
-      unitPrice: 199.99,
-      revenue: 199.99,
-      paymentMethod: 'PayPal',
-      status: 'Completed'
-    },
-    {
-      id: 3,
-      product: 'Bluetooth Speaker',
-      customer: 'Michael Brown',
-      date: '2023-06-13',
-      quantity: 3,
-      unitPrice: 89.99,
-      revenue: 269.97,
-      paymentMethod: 'Credit Card',
-      status: 'Shipped'
-    },
-    {
-      id: 4,
-      product: 'Laptop Backpack',
-      customer: 'Emily Davis',
-      date: '2023-06-12',
-      quantity: 1,
-      unitPrice: 49.99,
-      revenue: 49.99,
-      paymentMethod: 'Bank Transfer',
-      status: 'Processing'
-    },
-    {
-      id: 5,
-      product: 'Wireless Charger',
-      customer: 'David Wilson',
-      date: '2023-06-11',
-      quantity: 2,
-      unitPrice: 29.99,
-      revenue: 59.98,
-      paymentMethod: 'Credit Card',
-      status: 'Completed'
-    },
-    {
-      id: 6,
-      product: 'External SSD',
-      customer: 'Jessica Lee',
-      date: '2023-06-10',
-      quantity: 1,
-      unitPrice: 129.99,
-      revenue: 129.99,
-      paymentMethod: 'PayPal',
-      status: 'Completed'
-    },
-    {
-      id: 7,
-      product: 'Smartphone Holder',
-      customer: 'Robert Taylor',
-      date: '2023-06-09',
-      quantity: 4,
-      unitPrice: 19.99,
-      revenue: 79.96,
-      paymentMethod: 'Credit Card',
-      status: 'Cancelled'
-    }
-  ];
+  // Modal & form states for adding sale
+  const [isAddModalOpen, setIsAddModalOpen] = React.useState(false);
+  const [newSale, setNewSale] = React.useState({
+    product_id: 0,
+    quantity: 1,
+    price: 0,
+  });
 
-  const totalPagesCalculated = Math.ceil(salesData.length / rowsPerPage);
+  const fetchSalesRecords = async () => {
+    try {
+      const response = await axios.get('http://127.0.0.1:8000/api/sales-orders/');
+      if (Array.isArray(response.data)) {
+        const simplifiedData: Sale[] = response.data.map((item: any) => ({
+          id: item.id,
+          name: item.product?.name || '—',
+          quantity: item.quantity,
+          price: item.price,
+          date_ordered: item.date_ordered,
+        }));
+        setSalesData(simplifiedData);
+      } else {
+        console.error('Unexpected data format');
+      }
+    } catch (error) {
+      console.error('Error fetching sales:', error);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchSalesRecords();
+  }, []);
+
+  const totalPages = Math.ceil(salesData.length / rowsPerPage);
   const indexOfLastRow = currentPage * rowsPerPage;
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
   const currentRows = salesData.slice(indexOfFirstRow, indexOfLastRow);
 
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPagesCalculated) {
+    if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusClasses = {
-      Completed: 'bg-green-100 text-green-800',
-      Shipped: 'bg-blue-100 text-blue-800',
-      Processing: 'bg-yellow-100 text-yellow-800',
-      Cancelled: 'bg-red-100 text-red-800'
-    };
-    
-    return (
-      <span className={`text-xs px-2 py-1 rounded-full ${statusClasses[status as keyof typeof statusClasses] || 'bg-gray-100 text-gray-800'}`}>
-        {status}
-      </span>
-    );
+  // ADD NEW SALE
+  const handleAddSale = async () => {
+    try {
+      if (newSale.product_id <= 0 || newSale.price <= 0 || newSale.quantity <= 0) {
+        alert('Please fill in all fields with valid values.');
+        return;
+      }
+
+      const payload = {
+        product_id: newSale.product_id,
+        quantity: newSale.quantity,
+        price: newSale.price,
+      };
+
+      await axios.post('http://127.0.0.1:8000/api/sales-orders/', payload);
+      setIsAddModalOpen(false);
+      setNewSale({ product_id: 0, quantity: 1, price: 0 });
+      fetchSalesRecords();
+    } catch (error) {
+      console.error('Error adding sale:', error);
+      alert('Failed to add sale.');
+    }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
+  // DELETE SALE
+  const handleDeleteSale = async (id: number) => {
+    if (!window.confirm('Are you sure you want to delete this sale?')) return;
+
+    try {
+      await axios.delete(`http://127.0.0.1:8000/api/sales-orders/${id}/`);
+      fetchSalesRecords();
+    } catch (error) {
+      console.error('Error deleting sale:', error);
+      alert('Failed to delete sale.');
+    }
   };
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full bg-white">
-        <thead className="bg-gray-100 whitespace-nowrap">
+    <div className="overflow-x-auto p-4 bg-gray-50 rounded shadow">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-semibold text-gray-800">Sales Records</h2>
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+        >
+          Add Sale
+        </button>
+      </div>
+
+      <table className="min-w-full bg-white rounded shadow-sm overflow-hidden">
+        <thead className="bg-gray-200 text-gray-700">
           <tr>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Product</th>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Customer</th>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Date</th>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Qty</th>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Unit Price</th>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Revenue</th>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Payment</th>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Status</th>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Actions</th>
+            {['ID', 'Product Name', 'Quantity', 'Price', 'Date Ordered', 'Actions'].map(col => (
+              <th key={col} className="p-3 text-left text-sm font-medium">
+                {col}
+              </th>
+            ))}
           </tr>
         </thead>
-        <tbody className="whitespace-nowrap">
-          {currentRows.map((sale) => (
-            <tr key={sale.id} className="hover:bg-gray-50">
-              <td className="p-4 text-slate-900 font-medium">{sale.product}</td>
-              <td className="p-4 text-slate-600">{sale.customer}</td>
-              <td className="p-4 text-slate-600">{sale.date}</td>
-              <td className="p-4 text-slate-600">{sale.quantity}</td>
-              <td className="p-4 text-slate-600">{formatCurrency(sale.unitPrice)}</td>
-              <td className="p-4 text-slate-900 font-medium">{formatCurrency(sale.revenue)}</td>
-              <td className="p-4 text-slate-600">{sale.paymentMethod}</td>
-              <td className="p-4">{getStatusBadge(sale.status)}</td>
-              <td className="p-4 flex space-x-2">
-                <button className="text-blue-500 hover:text-blue-700" title="View Details">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-                  </svg>
-                </button>
-                <button className="text-red-500 hover:text-red-700" title="Refund">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
-                  </svg>
-                </button>
+        <tbody>
+          {currentRows.length === 0 ? (
+            <tr>
+              <td colSpan={6} className="text-center py-6 text-gray-500">
+                No sales found.
               </td>
             </tr>
-          ))}
+          ) : (
+            currentRows.map(sale => (
+              <tr key={sale.id} className="hover:bg-gray-100">
+                <td className="p-3">{sale.id}</td>
+                <td className="p-3 font-semibold text-gray-900">{sale.name}</td>
+                <td className="p-3 text-center">{sale.quantity}</td>
+                <td className="p-3">{sale.price ?? '—'}</td>
+                <td className="p-3 text-sm text-gray-600">
+                  {sale.date_ordered ? new Date(sale.date_ordered).toLocaleDateString() : '—'}
+                </td>
+                <td className="p-3">
+                  <button
+                    onClick={() => handleDeleteSale(sale.id)}
+                    className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
 
-      <div className="flex justify-between items-center mt-4 text-sm">
-        <p className="text-slate-600">
-          Page {currentPage} of {totalPagesCalculated}
-        </p>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-          >
-            Previous
-          </button>
-          {Array.from({ length: totalPagesCalculated }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => handlePageChange(i + 1)}
-              className={`px-3 py-1 rounded ${currentPage === i + 1
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 hover:bg-gray-300'
-                }`}
-            >
-              {i + 1}
-            </button>
-          ))}
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPagesCalculated}
-            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
+      {/* Pagination */}
+      <div className="mt-6 flex justify-center items-center space-x-4 text-gray-700">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-100 transition"
+        >
+          Prev
+        </button>
+        <span>
+          Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+        </span>
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-100 transition"
+        >
+          Next
+        </button>
       </div>
+
+      {/* Add Sale Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 flex justify-center items-center z-50 backdrop-blur-sm bg-black/30">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg">
+            <h3 className="text-xl font-semibold mb-4">Add New Sale</h3>
+            <div className="space-y-4">
+              <input
+                type="number"
+                min={1}
+                placeholder="Product ID *"
+                value={newSale.product_id}
+                onChange={e => setNewSale(prev => ({ ...prev, product_id: Number(e.target.value) }))}
+                className="w-full border border-gray-300 rounded px-3 py-2"
+              />
+              <input
+                type="number"
+                min={1}
+                placeholder="Quantity *"
+                value={newSale.quantity}
+                onChange={e => setNewSale(prev => ({ ...prev, quantity: Number(e.target.value) }))}
+                className="w-full border border-gray-300 rounded px-3 py-2"
+              />
+              <input
+                type="number"
+                min={0.01}
+                step="0.01"
+                placeholder="Price *"
+                value={newSale.price}
+                onChange={e => setNewSale(prev => ({ ...prev, price: Number(e.target.value) }))}
+                className="w-full border border-gray-300 rounded px-3 py-2"
+              />
+            </div>
+
+            <div className="mt-6 flex justify-end space-x-4">
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="px-4 py-2 border border-gray-400 rounded hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddSale}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
