@@ -9,12 +9,17 @@ interface Sale {
   date_ordered: string;
 }
 
+interface Product {
+  id: number;
+  name: string;
+}
+
 const SalesTable = () => {
   const [salesData, setSalesData] = React.useState<Sale[]>([]);
+  const [products, setProducts] = React.useState<Product[]>([]);  // <-- products list
   const [currentPage, setCurrentPage] = React.useState(1);
   const rowsPerPage = 5;
 
-  // Modal & form states for adding sale
   const [isAddModalOpen, setIsAddModalOpen] = React.useState(false);
   const [newSale, setNewSale] = React.useState({
     product_id: 0,
@@ -42,8 +47,19 @@ const SalesTable = () => {
     }
   };
 
+  // Fetch products for dropdown
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get('http://127.0.0.1:8000/api/get-product-by-name');
+      setProducts(response.data);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+  };
+
   React.useEffect(() => {
     fetchSalesRecords();
+    fetchProducts();  // fetch products on mount
   }, []);
 
   const totalPages = Math.ceil(salesData.length / rowsPerPage);
@@ -57,7 +73,6 @@ const SalesTable = () => {
     }
   };
 
-  // ADD NEW SALE
   const handleAddSale = async () => {
     try {
       if (newSale.product_id <= 0 || newSale.price <= 0 || newSale.quantity <= 0) {
@@ -81,7 +96,6 @@ const SalesTable = () => {
     }
   };
 
-  // DELETE SALE
   const handleDeleteSale = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this sale?')) return;
 
@@ -174,14 +188,25 @@ const SalesTable = () => {
           <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg">
             <h3 className="text-xl font-semibold mb-4">Add New Sale</h3>
             <div className="space-y-4">
-              <input
-                type="number"
-                min={1}
-                placeholder="Product ID *"
+
+              {/* Dropdown for product selection */}
+              <select
                 value={newSale.product_id}
-                onChange={e => setNewSale(prev => ({ ...prev, product_id: Number(e.target.value) }))}
+                onChange={e =>
+                  setNewSale(prev => ({ ...prev, product_id: Number(e.target.value) }))
+                }
                 className="w-full border border-gray-300 rounded px-3 py-2"
-              />
+              >
+                <option value={0} disabled>
+                  Select Product *
+                </option>
+                {products.map(product => (
+                  <option key={product.id} value={product.id}>
+                    {product.name}
+                  </option>
+                ))}
+              </select>
+
               <input
                 type="number"
                 min={1}
@@ -204,7 +229,7 @@ const SalesTable = () => {
             <div className="mt-6 flex justify-end space-x-4">
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="px-4 py-2 border border-gray-400 rounded hover:bg-gray-100"
+                className="px-4 py-2 border border-red-700 bg-red-600 text-white rounded hover:bg-red-700 transition"
               >
                 Cancel
               </button>
