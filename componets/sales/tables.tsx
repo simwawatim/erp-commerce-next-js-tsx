@@ -5,18 +5,19 @@ interface Sale {
   id: number;
   name: string;
   quantity: number;
-  price: number;
+  price?: number; // price may be undefined if not returned by API
   date_ordered: string;
 }
 
 interface Product {
   id: number;
   name: string;
+  price: number; // assuming each product has a price field
 }
 
 const SalesTable = () => {
   const [salesData, setSalesData] = React.useState<Sale[]>([]);
-  const [products, setProducts] = React.useState<Product[]>([]);  // <-- products list
+  const [products, setProducts] = React.useState<Product[]>([]);
   const [currentPage, setCurrentPage] = React.useState(1);
   const rowsPerPage = 5;
 
@@ -24,8 +25,20 @@ const SalesTable = () => {
   const [newSale, setNewSale] = React.useState({
     product_id: 0,
     quantity: 1,
-    price: 0,
   });
+
+  // Helper: get price for a product by id
+  const getProductPrice = (productId: number): number => {
+    const product = products.find(p => p.id === productId);
+    return product ? product.price : 0;
+  };
+
+  // Helper: calculate total price per sale
+  const totalPricePerSale = (sale: Sale): number => {
+    // Use sale.price if available; else fallback to product price * quantity
+    const price = sale.price ?? getProductPrice(sale.id);
+    return price * sale.quantity;
+  };
 
   const fetchSalesRecords = async () => {
     try {
@@ -35,7 +48,7 @@ const SalesTable = () => {
           id: item.id,
           name: item.product?.name || '—',
           quantity: item.quantity,
-          price: item.price,
+          price: item.product?.price ?? 0, // assuming your API returns price inside product object
           date_ordered: item.date_ordered,
         }));
         setSalesData(simplifiedData);
@@ -47,7 +60,6 @@ const SalesTable = () => {
     }
   };
 
-  // Fetch products for dropdown
   const fetchProducts = async () => {
     try {
       const response = await axios.get('http://127.0.0.1:8000/api/get-product-by-name');
@@ -59,7 +71,7 @@ const SalesTable = () => {
 
   React.useEffect(() => {
     fetchSalesRecords();
-    fetchProducts();  // fetch products on mount
+    fetchProducts();
   }, []);
 
   const totalPages = Math.ceil(salesData.length / rowsPerPage);
@@ -75,20 +87,19 @@ const SalesTable = () => {
 
   const handleAddSale = async () => {
     try {
-      if (newSale.product_id <= 0 || newSale.price <= 0 || newSale.quantity <= 0) {
-        alert('Please fill in all fields with valid values.');
+      if (newSale.product_id <= 0 || newSale.quantity <= 0) {
+        alert('Please select a product and enter a valid quantity.');
         return;
       }
 
       const payload = {
         product_id: newSale.product_id,
         quantity: newSale.quantity,
-        price: newSale.price,
       };
 
       await axios.post('http://127.0.0.1:8000/api/sales-orders/', payload);
       setIsAddModalOpen(false);
-      setNewSale({ product_id: 0, quantity: 1, price: 0 });
+      setNewSale({ product_id: 0, quantity: 1 });
       fetchSalesRecords();
     } catch (error) {
       console.error('Error adding sale:', error);
@@ -123,7 +134,7 @@ const SalesTable = () => {
       <table className="min-w-full bg-white rounded shadow-sm overflow-hidden">
         <thead className="bg-gray-200 text-gray-700">
           <tr>
-            {['ID', 'Product Name', 'Quantity', 'Price', 'Date Ordered', 'Actions'].map(col => (
+            {['ID', 'Product Name', 'Quantity', 'Price (K)', 'Total (K)', 'Date Ordered', 'Actions'].map(col => (
               <th key={col} className="p-3 text-left text-sm font-medium">
                 {col}
               </th>
@@ -133,30 +144,36 @@ const SalesTable = () => {
         <tbody>
           {currentRows.length === 0 ? (
             <tr>
-              <td colSpan={6} className="text-center py-6 text-gray-500">
+              <td colSpan={7} className="text-center py-6 text-gray-500">
                 No sales found.
               </td>
             </tr>
           ) : (
-            currentRows.map(sale => (
-              <tr key={sale.id} className="hover:bg-gray-100">
-                <td className="p-3">{sale.id}</td>
-                <td className="p-3 font-semibold text-gray-900">{sale.name}</td>
-                <td className="p-3 text-center">{sale.quantity}</td>
-                <td className="p-3">{sale.price ?? '—'}</td>
-                <td className="p-3 text-sm text-gray-600">
-                  {sale.date_ordered ? new Date(sale.date_ordered).toLocaleDateString() : '—'}
-                </td>
-                <td className="p-3">
-                  <button
-                    onClick={() => handleDeleteSale(sale.id)}
-                    className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))
+            currentRows.map(sale => {
+              const price = sale.price ?? getProductPrice(sale.id) ?? 0;
+              const total = price * sale.quantity;
+
+              return (
+                <tr key={sale.id} className="hover:bg-gray-100">
+                  <td className="p-3">{sale.id}</td>
+                  <td className="p-3 font-semibold text-gray-900">{sale.name}</td>
+                  <td className="p-3 text-center">{sale.quantity}</td>
+                  <td className="p-3 text-right">K{price.toFixed(2)}</td>
+                  <td className="p-3 text-right font-semibold">K{total.toFixed(2)}</td>
+                  <td className="p-3 text-sm text-gray-600">
+                    {sale.date_ordered ? new Date(sale.date_ordered).toLocaleDateString() : '—'}
+                  </td>
+                  <td className="p-3">
+                    <button
+                      onClick={() => handleDeleteSale(sale.id)}
+                      className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              );
+            })
           )}
         </tbody>
       </table>
@@ -188,7 +205,6 @@ const SalesTable = () => {
           <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg">
             <h3 className="text-xl font-semibold mb-4">Add New Sale</h3>
             <div className="space-y-4">
-
               {/* Dropdown for product selection */}
               <select
                 value={newSale.product_id}
@@ -202,7 +218,7 @@ const SalesTable = () => {
                 </option>
                 {products.map(product => (
                   <option key={product.id} value={product.id}>
-                    {product.name}
+                    {product.name} (K{product.price.toFixed(2)})
                   </option>
                 ))}
               </select>
@@ -213,15 +229,6 @@ const SalesTable = () => {
                 placeholder="Quantity *"
                 value={newSale.quantity}
                 onChange={e => setNewSale(prev => ({ ...prev, quantity: Number(e.target.value) }))}
-                className="w-full border border-gray-300 rounded px-3 py-2"
-              />
-              <input
-                type="number"
-                min={0.01}
-                step="0.01"
-                placeholder="Price *"
-                value={newSale.price}
-                onChange={e => setNewSale(prev => ({ ...prev, price: Number(e.target.value) }))}
                 className="w-full border border-gray-300 rounded px-3 py-2"
               />
             </div>
