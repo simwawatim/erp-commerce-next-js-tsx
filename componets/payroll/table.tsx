@@ -149,7 +149,7 @@ const PayrollTable = () => {
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
                 required
-                className="border p-2 rounded w-full"
+                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
               >
                 <option value="">Select Employee</option>
                 {employees.map((emp) => (
@@ -166,7 +166,7 @@ const PayrollTable = () => {
                 onChange={(e) => setBonus(e.target.value)}
                 step="0.01"
                 required
-                className="border p-2 rounded w-full"
+                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
               />
               <input
                 type="number"
@@ -175,7 +175,7 @@ const PayrollTable = () => {
                 onChange={(e) => setDeductions(e.target.value)}
                 step="0.01"
                 required
-                className="border p-2 rounded w-full"
+                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
               />
               <input
                 type="number"
@@ -184,7 +184,7 @@ const PayrollTable = () => {
                 onChange={(e) => setNetPay(e.target.value)}
                 step="0.01"
                 required
-                className="border p-2 rounded w-full"
+                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
               />
               <input
                 type="number"
@@ -193,13 +193,13 @@ const PayrollTable = () => {
                 onChange={(e) => setTotalPaid(e.target.value)}
                 step="0.01"
                 required
-                className="border p-2 rounded w-full"
+                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
               />
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
                 required
-                className="border p-2 rounded w-full"
+                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
               >
                 <option value="Paid">Paid</option>
                 <option value="Processing">Processing</option>
@@ -211,7 +211,7 @@ const PayrollTable = () => {
                 value={payDate}
                 onChange={(e) => setPayDate(e.target.value)}
                 required
-                className="border p-2 rounded w-full"
+                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
               />
               <div className="flex justify-end space-x-2">
                 <button
