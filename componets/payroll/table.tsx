@@ -26,15 +26,19 @@ interface IPayroll {
   pay_date: string;
 }
 
+interface IEmployeeOption {
+  id: number;
+  first_name: string;
+  last_name: string;
+}
+
 const PayrollTable = () => {
   const [payrollData, setPayrollData] = useState<IPayroll[]>([]);
+  const [employees, setEmployees] = useState<IEmployeeOption[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 5;
 
-  // Modal visibility state
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Form state for modal inputs
   const [employeeId, setEmployeeId] = useState('');
   const [bonus, setBonus] = useState('');
   const [deductions, setDeductions] = useState('');
@@ -45,6 +49,7 @@ const PayrollTable = () => {
 
   useEffect(() => {
     fetchPayrolls();
+    fetchEmployees();
   }, []);
 
   const fetchPayrolls = () => {
@@ -52,6 +57,13 @@ const PayrollTable = () => {
       .get<IPayroll[]>('http://127.0.0.1:8000/api/payrolls/')
       .then((res) => setPayrollData(res.data))
       .catch((err) => console.error('Error fetching payroll:', err));
+  };
+
+  const fetchEmployees = () => {
+    axios
+      .get<IEmployeeOption[]>('http://127.0.0.1:8000/api/get-employee-by-name/')
+      .then((res) => setEmployees(res.data))
+      .catch((err) => console.error('Error fetching employees:', err));
   };
 
   const formatCurrency = (amount: string | number) => {
@@ -78,6 +90,7 @@ const PayrollTable = () => {
 
   const totalPages = Math.ceil(payrollData.length / rowsPerPage);
   const currentRows = payrollData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+
   const handleAddPayroll = (e: React.FormEvent) => {
     e.preventDefault();
     const payload = {
@@ -93,7 +106,7 @@ const PayrollTable = () => {
     axios.post('http://127.0.0.1:8000/api/payrolls/', payload)
       .then(() => {
         fetchPayrolls();
-        setIsModalOpen(false); 
+        setIsModalOpen(false);
         setEmployeeId('');
         setBonus('');
         setDeductions('');
@@ -131,14 +144,21 @@ const PayrollTable = () => {
           <div className="bg-white p-6 rounded shadow-lg w-full max-w-lg relative">
             <h3 className="text-lg font-semibold mb-4">Add Payroll</h3>
             <form onSubmit={handleAddPayroll} className="space-y-4">
-              <input
-                type="number"
-                placeholder="Employee ID"
+
+              <select
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
                 required
                 className="border p-2 rounded w-full"
-              />
+              >
+                <option value="">Select Employee</option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.first_name} {emp.last_name}
+                  </option>
+                ))}
+              </select>
+
               <input
                 type="number"
                 placeholder="Bonus"
