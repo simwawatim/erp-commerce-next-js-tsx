@@ -13,7 +13,6 @@ interface Employee {
   id: number;
   user: User;
   role: string;
-  hourly_rate: number | string | null;
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -36,7 +35,6 @@ const EmployeesTable = () => {
   const [newEmployee, setNewEmployee] = useState<{
     user: User;
     role: string;
-    hourly_rate: string;
   }>({
     user: {
       id: 0,
@@ -46,7 +44,7 @@ const EmployeesTable = () => {
       email: '',
     },
     role: 'SALES',
-    hourly_rate: '0',
+
   });
 
   const rowsPerPage = 1;
@@ -89,7 +87,7 @@ const EmployeesTable = () => {
           email: emp.user.email,
         },
         role: emp.role,
-        hourly_rate: emp.hourly_rate,
+       
       });
       setEditingEmployee(null);
       fetchEmployees();
@@ -101,7 +99,7 @@ const EmployeesTable = () => {
   const handleCreate = async () => {
     try {
       const { username, first_name, last_name, email } = newEmployee.user;
-      if (!username || !first_name || !last_name || !email || !newEmployee.hourly_rate) {
+      if (!username || !first_name || !last_name || !email ) {
         alert('All fields required');
         return;
       }
@@ -114,14 +112,14 @@ const EmployeesTable = () => {
           email,
         },
         role: newEmployee.role,
-        hourly_rate: newEmployee.hourly_rate,
+ 
       });
 
       setIsCreateModalOpen(false);
       setNewEmployee({
         user: { id: 0, username: '', first_name: '', last_name: '', email: '' },
         role: 'SALES',
-        hourly_rate: '0',
+     
       });
       fetchEmployees();
     } catch (err) {
@@ -153,8 +151,8 @@ const EmployeesTable = () => {
           <tr>
             <th className="p-3">Name</th>
             <th className="p-3">Username</th>
+            <th className="p-3">Email</th>
             <th className="p-3">Role</th>
-            <th className="p-3 text-right">Hourly Rate</th>
             <th className="p-3 text-right">Actions</th>
           </tr>
         </thead>
@@ -173,7 +171,7 @@ const EmployeesTable = () => {
                           user: { ...editingEmployee.user, first_name: e.target.value },
                         })
                       }
-                      className="w-24 mr-1 border rounded px-1"
+                      className="w-50 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
                     />
                     <input
                       type="text"
@@ -184,7 +182,7 @@ const EmployeesTable = () => {
                           user: { ...editingEmployee.user, last_name: e.target.value },
                         })
                       }
-                      className="w-24 border rounded px-1"
+                      className="w-50 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
                     />
                   </>
                 ) : (
@@ -202,10 +200,28 @@ const EmployeesTable = () => {
                         user: { ...editingEmployee.user, username: e.target.value },
                       })
                     }
-                    className="w-full border rounded px-1"
+                    className="w-50 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
                   />
                 ) : (
                   emp.user.username
+                )}
+              </td>
+
+              <td className="p-3">
+                {editingEmployee?.id === emp.id ? (
+                  <input
+                    type="text"
+                    value={editingEmployee.user.email}
+                    onChange={e =>
+                      setEditingEmployee({
+                        ...editingEmployee,
+                        user: { ...editingEmployee.user, username: e.target.value },
+                      })
+                    }
+                    className="w-50 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
+                  />
+                ) : (
+                  emp.user.email
                 )}
               </td>
               <td className="p-3">
@@ -213,7 +229,7 @@ const EmployeesTable = () => {
                   <select
                     value={editingEmployee.role}
                     onChange={e => setEditingEmployee({ ...editingEmployee, role: e.target.value })}
-                    className="border rounded px-2 py-1"
+                    className="w-50 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
                   >
                     {Object.entries(ROLE_LABELS).map(([key, label]) => (
                       <option key={key} value={key}>
@@ -225,22 +241,7 @@ const EmployeesTable = () => {
                   ROLE_LABELS[emp.role]
                 )}
               </td>
-              <td className="p-3 text-right">
-                {editingEmployee?.id === emp.id ? (
-                  <input
-                    type="number"
-                    value={editingEmployee.hourly_rate ?? ''}
-                    onChange={e =>
-                      setEditingEmployee({ ...editingEmployee, hourly_rate: e.target.value })
-                    }
-                    className="w-24 text-right border rounded px-2 py-1"
-                  />
-                ) : emp.hourly_rate !== null ? (
-                  `K${emp.hourly_rate}`
-                ) : (
-                  '—'
-                )}
-              </td>
+             
               <td className="p-3 text-right">
                 {editingEmployee?.id === emp.id ? (
                   <>
@@ -251,7 +252,7 @@ const EmployeesTable = () => {
                       Save
                     </button>
                     <button
-                      className="px-3 py-1 bg-gray-300 rounded"
+                      className="px-3 py-1 bg-red-600 rounded text-white"
                       onClick={() => setEditingEmployee(null)}
                     >
                       Cancel
@@ -333,15 +334,7 @@ const EmployeesTable = () => {
               ))}
             </select>
 
-            <input
-              type="number"
-              placeholder="Hourly Rate"
-              value={newEmployee.hourly_rate}
-              onChange={e =>
-                setNewEmployee(prev => ({ ...prev, hourly_rate: e.target.value }))
-              }
-              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
-            />
+           
 
             <div className="flex justify-end space-x-3">
              <button
