@@ -12,7 +12,6 @@ interface IEmployee {
   id: number;
   user: IUser;
   role: string;
-  hourly_rate: string;
 }
 
 interface IPayroll {
@@ -239,7 +238,6 @@ const PayrollTable = () => {
           <tr>
             <th className="p-4 text-left text-sm font-semibold text-slate-900">Employee</th>
             <th className="p-4 text-left text-sm font-semibold text-slate-900">Role</th>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Hourly Rate</th>
             <th className="p-4 text-left text-sm font-semibold text-slate-900">Bonus</th>
             <th className="p-4 text-left text-sm font-semibold text-slate-900">Deductions</th>
             <th className="p-4 text-left text-sm font-semibold text-slate-900">Net Pay</th>
@@ -254,7 +252,6 @@ const PayrollTable = () => {
             <tr key={item.id} className="hover:bg-gray-50 border-b border-gray-200">
               <td className="p-4">{item.employee.user.first_name} {item.employee.user.last_name}</td>
               <td className="p-4">{item.employee.role}</td>
-              <td className="p-4">{formatCurrency(item.employee.hourly_rate)}</td>
               <td className="p-4 text-green-600">{formatCurrency(item.bonus)}</td>
               <td className="p-4 text-red-600">{formatCurrency(item.deductions)}</td>
               <td className="p-4 font-medium">{formatCurrency(item.net_pay)}</td>

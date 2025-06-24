@@ -47,7 +47,7 @@ const EmployeesTable = () => {
 
   });
 
-  const rowsPerPage = 1;
+  const rowsPerPage = 10;
 
   useEffect(() => {
     fetchEmployees();

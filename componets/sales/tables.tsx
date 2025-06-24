@@ -3,16 +3,17 @@ import React from 'react';
 
 interface Sale {
   id: number;
+  product_id: number;
   name: string;
   quantity: number;
-  price?: number; // price may be undefined if not returned by API
+  price?: number;
   date_ordered: string;
 }
 
 interface Product {
   id: number;
   name: string;
-  price: number; // assuming each product has a price field
+  price: number;
 }
 
 const SalesTable = () => {
@@ -27,17 +28,9 @@ const SalesTable = () => {
     quantity: 1,
   });
 
-  // Helper: get price for a product by id
   const getProductPrice = (productId: number): number => {
     const product = products.find(p => p.id === productId);
     return product ? product.price : 0;
-  };
-
-  // Helper: calculate total price per sale
-  const totalPricePerSale = (sale: Sale): number => {
-    // Use sale.price if available; else fallback to product price * quantity
-    const price = sale.price ?? getProductPrice(sale.id);
-    return price * sale.quantity;
   };
 
   const fetchSalesRecords = async () => {
@@ -46,9 +39,10 @@ const SalesTable = () => {
       if (Array.isArray(response.data)) {
         const simplifiedData: Sale[] = response.data.map((item: any) => ({
           id: item.id,
+          product_id: item.product?.id ?? 0,
           name: item.product?.name || '—',
           quantity: item.quantity,
-          price: item.product?.price ?? 0, // assuming your API returns price inside product object
+          price: parseFloat(item.price ?? '0'),
           date_ordered: item.date_ordered,
         }));
         setSalesData(simplifiedData);
@@ -63,7 +57,12 @@ const SalesTable = () => {
   const fetchProducts = async () => {
     try {
       const response = await axios.get('http://127.0.0.1:8000/api/get-product-by-name');
-      setProducts(response.data);
+      const data = response.data.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        price: parseFloat(item.cost_per_unit ?? '0'),
+      }));
+      setProducts(data);
     } catch (error) {
       console.error('Error fetching products:', error);
     }
@@ -75,9 +74,7 @@ const SalesTable = () => {
   }, []);
 
   const totalPages = Math.ceil(salesData.length / rowsPerPage);
-  const indexOfLastRow = currentPage * rowsPerPage;
-  const indexOfFirstRow = indexOfLastRow - rowsPerPage;
-  const currentRows = salesData.slice(indexOfFirstRow, indexOfLastRow);
+  const currentRows = salesData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -92,12 +89,7 @@ const SalesTable = () => {
         return;
       }
 
-      const payload = {
-        product_id: newSale.product_id,
-        quantity: newSale.quantity,
-      };
-
-      await axios.post('http://127.0.0.1:8000/api/sales-orders/', payload);
+      await axios.post('http://127.0.0.1:8000/api/sales-orders/', newSale);
       setIsAddModalOpen(false);
       setNewSale({ product_id: 0, quantity: 1 });
       fetchSalesRecords();
@@ -132,15 +124,18 @@ const SalesTable = () => {
       </div>
 
       <table className="min-w-full bg-white rounded shadow-sm overflow-hidden">
-        <thead className="bg-gray-200 text-gray-700">
-          <tr>
-            {['ID', 'Product Name', 'Quantity', 'Price (K)', 'Total (K)', 'Date Ordered', 'Actions'].map(col => (
-              <th key={col} className="p-3 text-left text-sm font-medium">
-                {col}
-              </th>
-            ))}
-          </tr>
-        </thead>
+       <thead className="bg-gray-200 text-gray-700">
+        <tr>
+          <th className="p-3 text-left text-sm font-medium w-12">ID</th>
+          <th className="p-3 text-left text-sm font-medium w-48">Product Name</th>
+          <th className="p-3 text-center text-sm font-medium w-24">Qty</th>
+          <th className="p-3 text-right text-sm font-medium w-32 whitespace-nowrap">Price (K)</th>
+          <th className="p-3 text-right text-sm font-medium w-32 whitespace-nowrap">Total (K)</th>
+          <th className="p-3 text-left text-sm font-medium w-40">Date Ordered</th>
+          <th className="p-3 text-center text-sm font-medium w-24">Actions</th>
+        </tr>
+      </thead>
+
         <tbody>
           {currentRows.length === 0 ? (
             <tr>
@@ -150,20 +145,20 @@ const SalesTable = () => {
             </tr>
           ) : (
             currentRows.map(sale => {
-              const price = sale.price ?? getProductPrice(sale.id) ?? 0;
+              const price = sale.price ?? getProductPrice(sale.product_id);
               const total = price * sale.quantity;
 
               return (
                 <tr key={sale.id} className="hover:bg-gray-100">
-                  <td className="p-3">{sale.id}</td>
+                  <td className="p-3 text-left">{sale.id}</td>
                   <td className="p-3 font-semibold text-gray-900">{sale.name}</td>
                   <td className="p-3 text-center">{sale.quantity}</td>
-                  <td className="p-3 text-right">K{price.toFixed(2)}</td>
-                  <td className="p-3 text-right font-semibold">K{total.toFixed(2)}</td>
-                  <td className="p-3 text-sm text-gray-600">
+                  <td className="p-3 text-right whitespace-nowrap">K{price.toFixed(2)}</td>
+                  <td className="p-3 text-right font-semibold whitespace-nowrap">K{total.toFixed(2)}</td>
+                  <td className="p-3 text-sm text-gray-600 text-left">
                     {sale.date_ordered ? new Date(sale.date_ordered).toLocaleDateString() : '—'}
                   </td>
-                  <td className="p-3">
+                  <td className="p-3 text-center">
                     <button
                       onClick={() => handleDeleteSale(sale.id)}
                       className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition"
@@ -178,7 +173,6 @@ const SalesTable = () => {
         </tbody>
       </table>
 
-      {/* Pagination */}
       <div className="mt-6 flex justify-center items-center space-x-4 text-gray-700">
         <button
           onClick={() => handlePageChange(currentPage - 1)}
@@ -199,13 +193,11 @@ const SalesTable = () => {
         </button>
       </div>
 
-      {/* Add Sale Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 flex justify-center items-center z-50 backdrop-blur-sm bg-black/30">
           <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg">
             <h3 className="text-xl font-semibold mb-4">Add New Sale</h3>
             <div className="space-y-4">
-              {/* Dropdown for product selection */}
               <select
                 value={newSale.product_id}
                 onChange={e =>

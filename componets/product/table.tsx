@@ -8,10 +8,10 @@ interface Product {
   description?: string | null;
   is_available: boolean;
   quantity: number;
-  cost_per_unit: number;
+  cost_per_unit: number | string;
   created_at: string;
   updated_at: string;
-  // created_by and updated_by are omitted here for simplicity
+
 }
 
 const PLACEHOLDER_IMAGE = 'https://res.cloudinary.com/demo/image/upload/v1689803100/ai/hiker.jpg';
@@ -182,7 +182,7 @@ const ProductsTable = () => {
                       type="text"
                       value={editingProduct.name}
                       onChange={e => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                      className="border border-gray-300 rounded px-2 py-1 w-full"
+                      className="w-50 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
                     />
                   ) : (
                     product.name
@@ -193,11 +193,11 @@ const ProductsTable = () => {
                   title={product.description || ''}
                 >
                   {editingProduct?.id === product.id ? (
-                    <textarea
+                    <input
                       value={editingProduct.description || ''}
                       onChange={e => setEditingProduct({ ...editingProduct, description: e.target.value })}
-                      className="border border-gray-300 rounded px-2 py-1 w-full resize-none"
-                      rows={2}
+                      className="w-50 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
+                     
                     />
                   ) : (
                     product.description || '—'
@@ -208,7 +208,7 @@ const ProductsTable = () => {
                     <select
                       value={editingProduct.is_available ? 'true' : 'false'}
                       onChange={e => setEditingProduct({ ...editingProduct, is_available: e.target.value === 'true' })}
-                      className="border border-gray-300 rounded px-2 py-1"
+                      className="w-50 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
                     >
                       <option value="true">Available</option>
                       <option value="false">Unavailable</option>
@@ -224,26 +224,27 @@ const ProductsTable = () => {
                       min={0}
                       value={editingProduct.quantity}
                       onChange={e => setEditingProduct({ ...editingProduct, quantity: Number(e.target.value) })}
-                      className="border border-gray-300 rounded px-2 py-1 w-20 text-center"
+                      className="w-50 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
                     />
                   ) : (
                     product.quantity
                   )}
                 </td>
-                <td className="p-3 align-middle text-right font-mono">
-                  {editingProduct?.id === product.id ? (
-                    <input
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      value={editingProduct.cost_per_unit}
-                      onChange={e => setEditingProduct({ ...editingProduct, cost_per_unit: Number(e.target.value) })}
-                      className="border border-gray-300 rounded px-2 py-1 w-28 text-right"
-                    />
-                  ) : (
-                    formatKwacha(product.cost_per_unit)
-                  )}
-                </td>
+               <td className="p-3 align-middle text-right font-mono">
+                {editingProduct?.id === product.id ? (
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={product.cost_per_unit}
+                    onChange={e => setEditingProduct({ ...editingProduct, cost_per_unit: Number(e.target.value) })}
+                    className="w-50 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
+                  />
+                ) : (
+                  product.cost_per_unit
+                )}
+              </td>
+
                 <td className="p-3 align-middle text-center text-sm text-gray-500">{formatDate(product.created_at)}</td>
                 <td className="p-3 align-middle text-center text-sm text-gray-500">{formatDate(product.updated_at)}</td>
                 <td className="p-3 align-middle text-right space-x-2 whitespace-nowrap">
