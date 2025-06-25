@@ -8,27 +8,28 @@ interface IUser {
   email: string;
 }
 
-interface IEmployee {
+interface IEmployeeData {
   id: number;
   user: IUser;
   role: string;
 }
 
+interface IEmployeeOption {
+  id: number; // outer wrapper ID
+  first_name: string;
+  last_name: string;
+  employee: IEmployeeData;
+}
+
 interface IPayroll {
   id: number;
-  employee: IEmployee;
+  employee: IEmployeeData;
   bonus: string;
   deductions: string;
   net_pay: string;
   total_paid: string;
   status: string;
   pay_date: string;
-}
-
-interface IEmployeeOption {
-  id: number;
-  first_name: string;
-  last_name: string;
 }
 
 const PayrollTable = () => {
@@ -133,7 +134,7 @@ const PayrollTable = () => {
           onClick={() => setIsModalOpen(true)}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
-          Add Payroll
+          Add Salary
         </button>
       </div>
 
@@ -141,7 +142,7 @@ const PayrollTable = () => {
       {isModalOpen && (
         <div className="fixed inset-0 flex justify-center items-center z-50 backdrop-blur-sm bg-white/30">
           <div className="bg-white p-6 rounded shadow-lg w-full max-w-lg relative">
-            <h3 className="text-lg font-semibold mb-4">Add Payroll</h3>
+            <h3 className="text-lg font-semibold mb-4">Add Salary</h3>
             <form onSubmit={handleAddPayroll} className="space-y-4">
 
               <select
@@ -152,8 +153,8 @@ const PayrollTable = () => {
               >
                 <option value="">Select Employee</option>
                 {employees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.first_name} {emp.last_name}
+                  <option key={emp.id} value={emp.employee.id}>
+                    {emp.first_name} {emp.last_name} ({emp.employee.role})
                   </option>
                 ))}
               </select>
@@ -216,7 +217,7 @@ const PayrollTable = () => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border rounded"
+                  className="px-4 bg-red-600 text-white  py-2 border rounded"
                 >
                   Cancel
                 </button>
