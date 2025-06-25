@@ -338,20 +338,21 @@ const ProductsTable = () => {
                 />
                 <span>Available</span>
               </label>
-              <input
-                type="number"
-                min={1}
-                required
-                placeholder="Quantity On Hand *"
-                value={newProduct.quantity|| ''}
-                onChange={e =>
-                  setNewProduct(prev => ({
-                    ...prev,
-                    quantity_on_hand: e.target.value ? Number(e.target.value) : undefined
-                  }))
-                }
-                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
-              />
+                <input
+                  type="number"
+                  min={1}
+                  required
+                  placeholder="Quantity On Hand *"
+                  value={newProduct.quantity || ''}
+                  onChange={e =>
+                    setNewProduct(prev => ({
+                      ...prev,
+                      quantity: e.target.value ? Number(e.target.value) : undefined
+                    }))
+                  }
+                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
+                />
+
               <input
                 type="number"
                 min={0.01}
