@@ -1,0 +1,3 @@
+sales -  username: simon11 password: 3701
+hr - username: tim11 password: 8852
+finance - username tembo11 password:  9969
