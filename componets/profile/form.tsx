@@ -10,8 +10,15 @@ interface ProfileFormData {
   profilePictureUrl?: string;
 }
 
-// Set the user ID (can be dynamic based on auth/user context)
-const USER_ID = 2;
+const decodeJWT = (token: string) => {
+  try {
+    const payload = token.split('.')[1];
+    return JSON.parse(atob(payload));
+  } catch (e) {
+    console.error("Failed to decode JWT", e);
+    return null;
+  }
+};
 
 const ProfileForm = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -25,6 +32,8 @@ const ProfileForm = () => {
     profilePictureUrl: '',
   });
 
+  const [userId, setUserId] = useState<number | null>(null);
+
   const defaultImage =
     'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
 
@@ -32,10 +41,21 @@ const ProfileForm = () => {
     ? URL.createObjectURL(formData.profilePicture)
     : formData.profilePictureUrl || defaultImage;
 
-  // Fetch profile data
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const accessToken = localStorage.getItem('access');
+      if (accessToken) {
+        const decoded = decodeJWT(accessToken);
+        setUserId(decoded?.user_id || null);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+
     axios
-      .get(`http://127.0.0.1:8000/api/profile/${USER_ID}/`)
+      .get(`http://127.0.0.1:8000/api/profile/${userId}/`)
       .then(res => {
         const data = res.data;
         setFormData(prev => ({
@@ -52,20 +72,20 @@ const ProfileForm = () => {
       .catch(err => {
         console.error('Failed to fetch profile:', err);
       });
-  }, []);
+  }, [userId]);
 
-  // Trigger file input
   const handleImageClick = () => {
     fileInputRef.current?.click();
   };
 
-  // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, files } = e.target;
-    if (name === 'profilePicture') {
+
+    if (name === 'profilePicture' && files && files.length > 0) {
+      console.log('Selected image file:', files[0]); // ✅ Log file for debug
       setFormData(prev => ({
         ...prev,
-        profilePicture: files?.[0] || null,
+        profilePicture: files[0],
       }));
     } else {
       setFormData(prev => ({
@@ -75,26 +95,40 @@ const ProfileForm = () => {
     }
   };
 
-  // Submit profile update
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!userId) {
+      alert("User ID not found.");
+      return;
+    }
 
     const submission = new FormData();
     submission.append('username', formData.username);
     submission.append('first_name', formData.firstName);
     submission.append('last_name', formData.lastName);
     submission.append('email', formData.email);
+
     if (formData.profilePicture) {
+      console.log('Appending image to submission:', formData.profilePicture); // ✅ Log before sending
       submission.append('profile_picture', formData.profilePicture);
+    } else {
+      console.warn('No image selected.');
     }
 
     try {
-      await axios.patch(`http://127.0.0.1:8000/api/profile/${USER_ID}/`, submission, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await axios.patch(
+        `http://127.0.0.1:8000/api/profile/${userId}/`,
+        submission,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${localStorage.getItem('access')}`,
+          },
+        }
+      );
       alert('Profile updated!');
+      console.log('Server response:', response.data);
     } catch (error) {
       console.error('Profile update failed:', error);
     }
@@ -104,7 +138,6 @@ const ProfileForm = () => {
     <div className="p-6 max-w-3xl mx-auto">
       <h2 className="text-xl font-semibold text-slate-800 mb-6 text-center">Profile</h2>
 
-      {/* Profile Picture */}
       <div className="flex justify-center mb-8">
         <div
           onClick={handleImageClick}
@@ -128,7 +161,6 @@ const ProfileForm = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-12 gap-6">
-        {/* Username */}
         <div className="col-span-12 md:col-span-6">
           <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
           <input
@@ -141,7 +173,6 @@ const ProfileForm = () => {
           />
         </div>
 
-        {/* First Name */}
         <div className="col-span-12 md:col-span-6">
           <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
           <input
@@ -154,7 +185,6 @@ const ProfileForm = () => {
           />
         </div>
 
-        {/* Last Name */}
         <div className="col-span-12 md:col-span-6">
           <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
           <input
@@ -167,7 +197,6 @@ const ProfileForm = () => {
           />
         </div>
 
-        {/* Email */}
         <div className="col-span-12 md:col-span-6">
           <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
           <input
@@ -180,7 +209,6 @@ const ProfileForm = () => {
           />
         </div>
 
-        {/* Submit Button */}
         <div className="col-span-12">
           <button
             type="submit"

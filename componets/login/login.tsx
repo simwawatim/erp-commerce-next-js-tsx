@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { loginUser } from "../../api/services/login/login";
 import { useRouter } from "next/navigation";
 
+
 const LoginForm: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -91,7 +92,7 @@ const LoginForm: React.FC = () => {
 
           <div className="max-md:mt-8">
             <img
-              src="https://readymadeui.com/login-image.webp"
+              src="login-image.webp"
               className="w-full aspect-[71/50] max-md:w-4/5 mx-auto block object-cover"
               alt="login"
             />
