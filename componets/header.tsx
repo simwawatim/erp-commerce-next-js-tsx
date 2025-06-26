@@ -1,21 +1,27 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 const Header = () => {
   const router = useRouter();
+  const [username, setUsername] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
     const access = localStorage.getItem("access");
     if (!access) {
       router.push("/login");
+      return;
     }
+
+    setUsername(localStorage.getItem("username"));
+    setRole(localStorage.getItem("role"));
   }, [router]);
 
   return (
     <header className="flex shadow-lg py-4 px-4 sm:px-10 bg-white min-h-[70px] tracking-wide relative z-50">
       <div className="flex items-center justify-between w-full">
-        {/* Icon at the start */}
+        {/* Logo and title */}
         <div className="flex items-center">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -28,8 +34,15 @@ const Header = () => {
           <span className="ml-2 text-xl font-semibold">Dashboard</span>
         </div>
 
-        {/* Profile image at the end */}
+        {/* Welcome message and profile image */}
         <div className="flex items-center space-x-4">
+          {username && role && (
+            <div className="text-right">
+              <p className="text-sm font-medium text-gray-800">Welcome, {username}</p>
+              <p className="text-xs text-gray-500">Role: {role}</p>
+            </div>
+          )}
+
           <div className="relative">
             <img
               src="https://randomuser.me/api/portraits/women/44.jpg"
