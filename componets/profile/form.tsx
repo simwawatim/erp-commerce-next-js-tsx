@@ -10,6 +10,9 @@ interface ProfileFormData {
   profilePictureUrl?: string;
 }
 
+// Set the user ID (can be dynamic based on auth/user context)
+const USER_ID = 2;
+
 const ProfileForm = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -29,10 +32,10 @@ const ProfileForm = () => {
     ? URL.createObjectURL(formData.profilePicture)
     : formData.profilePictureUrl || defaultImage;
 
+  // Fetch profile data
   useEffect(() => {
-    // Fetch profile info on mount
     axios
-      .get('http://127.0.0.1:8000/api/profile/1/')
+      .get(`http://127.0.0.1:8000/api/profile/${USER_ID}/`)
       .then(res => {
         const data = res.data;
         setFormData(prev => ({
@@ -41,7 +44,9 @@ const ProfileForm = () => {
           firstName: data.first_name,
           lastName: data.last_name,
           email: data.email,
-          profilePictureUrl: data.employee?.profile_picture || '',
+          profilePictureUrl: data.employee?.profile_picture
+            ? `http://127.0.0.1:8000/${data.employee.profile_picture}`
+            : '',
         }));
       })
       .catch(err => {
@@ -49,10 +54,12 @@ const ProfileForm = () => {
       });
   }, []);
 
+  // Trigger file input
   const handleImageClick = () => {
     fileInputRef.current?.click();
   };
 
+  // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, files } = e.target;
     if (name === 'profilePicture') {
@@ -68,6 +75,7 @@ const ProfileForm = () => {
     }
   };
 
+  // Submit profile update
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -81,7 +89,7 @@ const ProfileForm = () => {
     }
 
     try {
-      await axios.patch('http://127.0.0.1:8000/api/profile/1/', submission, {
+      await axios.patch(`http://127.0.0.1:8000/api/profile/${USER_ID}/`, submission, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
