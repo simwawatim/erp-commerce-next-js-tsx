@@ -1,6 +1,9 @@
 import { logoutUser } from "./../api/services/base-url";
+import { getUserRole } from "../utils/authUtils";
 
 const SideNav = () => {
+  const role = getUserRole();
+  console.log("Role from SideNav:", role);
   return (
     <nav className="bg-[#f7f7f8] h-screen fixed top-0 left-0 min-w-[250px] py-6 px-4">
       <div className="relative">
