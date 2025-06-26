@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import axios from 'axios';
 
 interface ProfileFormData {
   username: string;
@@ -6,6 +7,7 @@ interface ProfileFormData {
   lastName: string;
   email: string;
   profilePicture: File | null;
+  profilePictureUrl?: string;
 }
 
 const ProfileForm = () => {
@@ -17,6 +19,7 @@ const ProfileForm = () => {
     lastName: '',
     email: '',
     profilePicture: null,
+    profilePictureUrl: '',
   });
 
   const defaultImage =
@@ -24,7 +27,27 @@ const ProfileForm = () => {
 
   const imagePreview = formData.profilePicture
     ? URL.createObjectURL(formData.profilePicture)
-    : defaultImage;
+    : formData.profilePictureUrl || defaultImage;
+
+  useEffect(() => {
+    // Fetch profile info on mount
+    axios
+      .get('http://127.0.0.1:8000/api/profile/1/')
+      .then(res => {
+        const data = res.data;
+        setFormData(prev => ({
+          ...prev,
+          username: data.username,
+          firstName: data.first_name,
+          lastName: data.last_name,
+          email: data.email,
+          profilePictureUrl: data.employee?.profile_picture || '',
+        }));
+      })
+      .catch(err => {
+        console.error('Failed to fetch profile:', err);
+      });
+  }, []);
 
   const handleImageClick = () => {
     fileInputRef.current?.click();
@@ -33,22 +56,47 @@ const ProfileForm = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, files } = e.target;
     if (name === 'profilePicture') {
-      setFormData(prev => ({ ...prev, profilePicture: files?.[0] || null }));
+      setFormData(prev => ({
+        ...prev,
+        profilePicture: files?.[0] || null,
+      }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+      }));
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(formData);
+
+    const submission = new FormData();
+    submission.append('username', formData.username);
+    submission.append('first_name', formData.firstName);
+    submission.append('last_name', formData.lastName);
+    submission.append('email', formData.email);
+    if (formData.profilePicture) {
+      submission.append('profile_picture', formData.profilePicture);
+    }
+
+    try {
+      await axios.patch('http://127.0.0.1:8000/api/profile/1/', submission, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      alert('Profile updated!');
+    } catch (error) {
+      console.error('Profile update failed:', error);
+    }
   };
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <h2 className="text-xl font-semibold text-slate-800 mb-6 text-center">Profile</h2>
 
-      {/* Profile Picture - centered */}
+      {/* Profile Picture */}
       <div className="flex justify-center mb-8">
         <div
           onClick={handleImageClick}
@@ -124,7 +172,7 @@ const ProfileForm = () => {
           />
         </div>
 
-        {/* Submit Button full width */}
+        {/* Submit Button */}
         <div className="col-span-12">
           <button
             type="submit"
