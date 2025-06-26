@@ -1,5 +1,7 @@
 import Header from "../../../componets/header";
+import ProfileForm from "../../../componets/profile/form";
 import SideNav from "../../../componets/side-nav";
+
 
 export default function ProfilePage() {
   return (
@@ -16,7 +18,7 @@ export default function ProfilePage() {
 
                 {/* Main Content */}
                 <main className="flex-1 p-6 bg-white overflow-y-auto">
-                   
+                   <ProfileForm />
                 </main>
             </div>
         </div>
