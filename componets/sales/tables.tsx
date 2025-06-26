@@ -219,10 +219,17 @@ const SalesTable = () => {
                 type="number"
                 min={1}
                 placeholder="Quantity *"
-                value={newSale.quantity}
-                onChange={e => setNewSale(prev => ({ ...prev, quantity: Number(e.target.value) }))}
+                value={newSale.quantity === null ? '' : newSale.quantity}
+                onChange={e => {
+                  const value = e.target.value;
+                  setNewSale(prev => ({
+                    ...prev,
+                    quantity: value === '' ? 0 : Number(value),
+                  }));
+                }}
                 className="w-full border border-gray-300 rounded px-3 py-2"
               />
+
             </div>
 
             <div className="mt-6 flex justify-end space-x-4">
