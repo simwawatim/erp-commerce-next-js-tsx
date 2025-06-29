@@ -1,214 +1,154 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React from 'react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell,
-  LineChart, Line, AreaChart, Area
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 
-const CorporateDashboard = () => {
-  const [loading, setLoading] = useState(true);
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
-  type RevenueDatum = { name: string; sales: number; services: number };
-  type PayrollDatum = { name: string; value: number };
-  type FinanceDatum = { name: string; revenue: number; expenses: number };
+const dummyData = {
+  HR: {
+    cards: [
+      { label: 'Total Employees', value: 150 },
+      { label: 'Active Employees', value: 120 },
+      { label: 'On Leave', value: 30 },
+    ],
+    pieChart: [
+      { name: 'Managers', value: 10 },
+      { name: 'Recruiters', value: 20 },
+      { name: 'Interns', value: 5 },
+    ],
+    barChart: [
+      { name: 'Q1', hires: 5 },
+      { name: 'Q2', hires: 10 },
+      { name: 'Q3', hires: 7 },
+      { name: 'Q4', hires: 3 },
+    ],
+  },
+  Finance: {
+    cards: [
+      { label: 'Total Budget', value: 500000 },
+      { label: 'Expenses', value: 320000 },
+      { label: 'Remaining', value: 180000 },
+    ],
+    pieChart: [
+      { name: 'Payroll', value: 200000 },
+      { name: 'Operations', value: 80000 },
+      { name: 'Compliance', value: 40000 },
+    ],
+    barChart: [
+      { name: 'Q1', expense: 120000 },
+      { name: 'Q2', expense: 100000 },
+      { name: 'Q3', expense: 70000 },
+      { name: 'Q4', expense: 30000 },
+    ],
+  },
+  Sales: {
+    cards: [
+      { label: 'Total Sales', value: 1000000 },
+      { label: 'Targets Achieved', value: 800000 },
+      { label: 'Pending Deals', value: 200000 },
+    ],
+    pieChart: [
+      { name: 'Retail', value: 400000 },
+      { name: 'Wholesale', value: 300000 },
+      { name: 'Online', value: 300000 },
+    ],
+    barChart: [
+      { name: 'Q1', sales: 200000 },
+      { name: 'Q2', sales: 250000 },
+      { name: 'Q3', sales: 300000 },
+      { name: 'Q4', sales: 250000 },
+    ],
+  },
+};
 
-  const [revenueData, setRevenueData] = useState<RevenueDatum[]>([]);
-  const [payrollData, setPayrollData] = useState<PayrollDatum[]>([]);
-  const [financeData, setFinanceData] = useState<FinanceDatum[]>([]);
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('en-ZM', {
+    style: 'currency',
+    currency: 'ZMW',
+    minimumFractionDigits: 0,
+  }).format(value);
 
-  const [totalRevenue, setTotalRevenue] = useState<number | null>(null);
-  const [totalExpenses, setTotalExpenses] = useState<number | null>(null);
-  const [totalProfit, setTotalProfit] = useState<number | null>(null);
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [revRes, expRes, profRes] = await Promise.all([
-          axios.get('http://127.0.0.1:8000/api/financial/revenue/'),
-          axios.get('http://127.0.0.1:8000/api/financial/expenses/'),
-          axios.get('http://127.0.0.1:8000/api/financial/profit/')
-        ]);
-
-        setTotalRevenue(revRes.data.revenue);
-        setTotalExpenses(expRes.data.expenses);
-        setTotalProfit(profRes.data.profit);
-      } catch (error) {
-        console.error('Error fetching financial summary:', error);
-      }
-
-      // Simulate chart data loading (replace with real data if needed)
-      setRevenueData([
-        { name: 'Jan', sales: 4000, services: 2400 },
-        { name: 'Feb', sales: 3000, services: 1398 },
-        { name: 'Mar', sales: 2000, services: 9800 },
-        { name: 'Apr', sales: 2780, services: 3908 },
-        { name: 'May', sales: 1890, services: 4800 },
-        { name: 'Jun', sales: 2390, services: 3800 },
-      ]);
-
-      setPayrollData([
-        { name: 'IT', value: 35 },
-        { name: 'Sales', value: 25 },
-        { name: 'Marketing', value: 20 },
-        { name: 'Operations', value: 20 },
-      ]);
-
-      setFinanceData([
-        { name: 'Jan', revenue: 4000, expenses: 2400 },
-        { name: 'Feb', revenue: 3000, expenses: 1398 },
-        { name: 'Mar', revenue: 2000, expenses: 9800 },
-        { name: 'Apr', revenue: 2780, expenses: 3908 },
-        { name: 'May', revenue: 1890, expenses: 4800 },
-        { name: 'Jun', revenue: 2390, expenses: 3800 },
-      ]);
-
-      setLoading(false);
-    };
-
-    fetchData();
-  }, []);
-
-  const renderSkeletonCard = () => (
-    <div className="bg-gray-100 animate-pulse p-4 rounded-lg shadow h-28"></div>
-  );
-
-  const renderSkeletonChart = () => (
-    <div className="bg-gray-100 animate-pulse p-4 rounded-lg shadow h-[300px]"></div>
-  );
-
-  const formatKwacha = (value: number | null) =>
-    value !== null
-      ? new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW', minimumFractionDigits: 0 }).format(value)
-      : 'K0';
+const RoleSection = ({ role, color }: { role: keyof typeof dummyData; color: string }) => {
+  const roleData = dummyData[role];
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Dashboard</h1>
+    <div className="mb-12">
+      <h2 className="text-2xl font-bold text-gray-800 mb-4">{role} Overview</h2>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {loading ? (
-          <>
-            {renderSkeletonCard()}
-            {renderSkeletonCard()}
-            {renderSkeletonCard()}
-          </>
-        ) : (
-          <>
-            <div className="bg-blue-50 p-4 rounded-lg shadow">
-              <h3 className="text-sm font-medium text-blue-800">Total Revenue</h3>
-              <p className="text-2xl font-semibold text-blue-600">{formatKwacha(totalRevenue)}</p>
-              <p className="text-green-600 text-sm mt-1">↑ 12% vs last quarter</p>
-            </div>
-
-            <div className="bg-green-50 p-4 rounded-lg shadow">
-              <h3 className="text-sm font-medium text-green-800">Total Expenses</h3>
-              <p className="text-2xl font-semibold text-green-600">{formatKwacha(totalExpenses)}</p>
-              <p className="text-red-600 text-sm mt-1">↑ 5% vs last quarter</p>
-            </div>
-
-            <div className="bg-purple-50 p-4 rounded-lg shadow">
-              <h3 className="text-sm font-medium text-purple-800">Net Profit</h3>
-              <p className="text-2xl font-semibold text-purple-600">{formatKwacha(totalProfit)}</p>
-              <p className="text-green-600 text-sm mt-1">↑ 24% vs last quarter</p>
-            </div>
-          </>
-        )}
+      {/* Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {roleData.cards.map((card, idx) => (
+          <div
+            key={idx}
+            className={`p-4 rounded-xl shadow bg-gradient-to-br from-${color}-100 to-${color}-200 text-${color}-900`}
+          >
+            <h4 className="text-sm font-semibold">{card.label}</h4>
+            <p className="text-2xl font-bold mt-1">
+              {card.label.includes('Sales') || card.label.includes('Budget') || card.label.includes('Expenses') || card.label.includes('Remaining')
+                ? formatCurrency(card.value)
+                : card.value}
+            </p>
+          </div>
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 mt-6">
-        {loading ? (
-          <>
-            {renderSkeletonChart()}
-            {renderSkeletonChart()}
-          </>
-        ) : (
-          <>
-            <div className="bg-white p-4 rounded-lg shadow">
-              <h2 className="text-lg font-semibold mb-4">Revenue Streams</h2>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={revenueData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="sales" fill="#8884d8" name="Product Sales" />
-                  <Bar dataKey="services" fill="#82ca9d" name="Services" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-lg shadow p-4">
+          <h3 className="text-lg font-semibold mb-4">{role} Distribution</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={roleData.pieChart}
+                cx="50%"
+                cy="50%"
+                outerRadius={80}
+                dataKey="value"
+                nameKey="name"
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              >
+                {roleData.pieChart.map((_, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
 
-            <div className="bg-white p-4 rounded-lg shadow">
-              <h2 className="text-lg font-semibold mb-4">Payroll by Department</h2>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={payrollData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    nameKey="name"
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {payrollData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </>
-        )}
+        <div className="bg-white rounded-lg shadow p-4">
+          <h3 className="text-lg font-semibold mb-4">{role} Quarterly Data</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart
+              data={roleData.barChart}
+              margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar
+                dataKey={Object.keys(roleData.barChart[0]).find((k) => k !== 'name')!}
+                fill={COLORS[0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
+    </div>
+  );
+};
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {loading ? (
-          <>
-            {renderSkeletonChart()}
-            {renderSkeletonChart()}
-          </>
-        ) : (
-          <>
-            <div className="bg-white p-4 rounded-lg shadow">
-              <h2 className="text-lg font-semibold mb-4">Revenue vs Expenses</h2>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={financeData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="revenue" stroke="#8884d8" fill="#8884d8" name="Revenue" />
-                  <Area type="monotone" dataKey="expenses" stroke="#ff7300" fill="#ff7300" name="Expenses" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+const CorporateDashboard = () => {
+  return (
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <h1 className="text-3xl font-bold mb-8 text-gray-900">Corporate Dashboard</h1>
 
-            <div className="bg-white p-4 rounded-lg shadow">
-              <h2 className="text-lg font-semibold mb-4">Profit Trend</h2>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={financeData.map(item => ({
-                  ...item,
-                  profit: item.revenue - item.expenses
-                }))}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="profit" stroke="#82ca9d" name="Net Profit" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </>
-        )}
-      </div>
+      <RoleSection role="HR" color="blue" />
+      <RoleSection role="Finance" color="green" />
+      <RoleSection role="Sales" color="purple" />
     </div>
   );
 };
