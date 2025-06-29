@@ -3,7 +3,7 @@ import axios from 'axios';
 
 interface Product {
   id: number;
-  image?: string | null;
+  image?: string | File | null;
   name: string;
   description?: string | null;
   is_available: boolean;
@@ -23,6 +23,8 @@ const ProductsTable = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [modalImage, setModalImage] = useState<string | null>(null);
+
 
   const [newProduct, setNewProduct] = useState<Partial<Product>>({
     name: '',
@@ -86,20 +88,29 @@ const ProductsTable = () => {
         return;
       }
 
-      const payload = {
-        name: newProduct.name,
-        description: newProduct.description || '',
-        is_available: newProduct.is_available ?? true,
-        quantity_on_hand: Number(newProduct.quantity) || 0,
-        cost_per_unit: Number(newProduct.cost_per_unit) || 0,
-      };
+      const formData = new FormData();
+      formData.append('name', newProduct.name);
+      formData.append('description', newProduct.description || '');
+      formData.append('is_available', String(newProduct.is_available ?? true));
+      formData.append('quantity', String(newProduct.quantity || 0));
+      formData.append('cost_per_unit', String(newProduct.cost_per_unit || 0));
 
-      await axios.post('http://127.0.0.1:8000/api/products/', payload);
+      if (newProduct.image instanceof File) {
+        formData.append('image', newProduct.image);
+      }
+
+      await axios.post('http://127.0.0.1:8000/api/products/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
       setCurrentPage(1);
       await fetchProducts();
       setIsCreateModalOpen(false);
       setNewProduct({
         name: '',
+        image: null,
         description: '',
         is_available: true,
         quantity: 1,
@@ -110,6 +121,7 @@ const ProductsTable = () => {
       alert('Failed to create product. Check console for details.');
     }
   };
+
 
   const getStatusBadge = (isAvailable: boolean) =>
     isAvailable ? (
@@ -170,12 +182,15 @@ const ProductsTable = () => {
               <tr key={product.id} className="hover:bg-gray-100">
                 <td className="p-3 align-middle">
                   <img
-                    src={product.image || PLACEHOLDER_IMAGE}
+                    src={product.image ? `http://127.0.0.1:8000${product.image}` : PLACEHOLDER_IMAGE}
                     alt={product.name}
-                    className="w-12 h-12 rounded object-cover"
+                    className="w-12 h-12 rounded object-cover cursor-pointer"
+                    onClick={() => setModalImage(product.image ? `http://127.0.0.1:8000${product.image}` : PLACEHOLDER_IMAGE)}
                     onError={e => ((e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE)}
                   />
                 </td>
+                
+
                 <td className="p-3 align-middle font-semibold text-gray-900">
                   {editingProduct?.id === product.id ? (
                     <input
@@ -188,6 +203,8 @@ const ProductsTable = () => {
                     product.name
                   )}
                 </td>
+
+                
                 <td
                   className="p-3 align-middle text-gray-700 max-w-xs truncate"
                   title={product.description || ''}
@@ -321,6 +338,16 @@ const ProductsTable = () => {
                 onChange={e => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
                 className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-md"
               />
+
+               <input
+                    type="file"
+                    accept="image/*"
+                    onChange={e => setNewProduct(prev => ({
+                      ...prev,
+                      image: e.target.files?.[0] || null
+                    }))}
+                    className="w-full border border-gray-300 rounded px-3 py-2 max-w-md"
+                  />
               <textarea
                 placeholder="Description *"
                 required
@@ -388,6 +415,25 @@ const ProductsTable = () => {
           </div>
         </div>
       )}
+
+      {modalImage && (
+        <div className="fixed inset-0 flex justify-center items-center z-50 backdrop-blur-sm bg-white/30">
+          <div className="relative bg-white p-4 rounded shadow-lg max-w-2xl w-full">
+            <button
+              onClick={() => setModalImage(null)}
+              className="absolute top-2 right-2 text-gray-600 hover:text-black text-2xl font-bold"
+            >
+              &times;
+            </button>
+            <img
+              src={modalImage}
+              alt="Product"
+              className="w-full max-h-[80vh] object-contain rounded"
+            />
+          </div>
+        </div>
+      )}
+
 
     </div>
   );
