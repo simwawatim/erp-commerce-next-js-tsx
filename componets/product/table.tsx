@@ -14,7 +14,7 @@ interface Product {
 
 }
 
-const PLACEHOLDER_IMAGE = 'https://res.cloudinary.com/demo/image/upload/v1689803100/ai/hiker.jpg';
+const PLACEHOLDER_IMAGE = '/placeholder.png';
 
 const ProductsTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
