@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
-import { ShoppingCart } from "lucide-react"; // Optional icon library
+import { ShoppingCart } from "lucide-react";
 import { useCart } from "../customer/helpers/CartContext";
 
 const CustomerDashboard = () => {

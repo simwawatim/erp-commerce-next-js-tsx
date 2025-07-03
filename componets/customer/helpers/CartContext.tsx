@@ -1,52 +1,100 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 
-interface CartContextType {
-  cartCount: number;
-  addToCart: () => void;
+interface CartItem {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  imageSrc: string;
 }
 
-const CartContext = createContext<CartContextType | undefined>(undefined);
+interface CartContextType {
+  cartItems: CartItem[];
+  addToCart: (item: CartItem) => void;
+  removeFromCart: (id: number) => void;
+  updateQuantity: (id: number, quantity: number) => void;
+  cartCount: number;
+}
 
-export const useCart = () => {
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error("useCart must be used within CartProvider");
-  }
-  return context;
-};
+const CartContext = createContext<CartContextType>({
+  cartItems: [],
+  addToCart: () => {},
+  removeFromCart: () => {},
+  updateQuantity: () => {},
+  cartCount: 0,
+});
+
+const CART_STORAGE_KEY = "cart_items_storage";
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [cartCount, setCartCount] = useState<number>(0);
-  const [hasMounted, setHasMounted] = useState(false);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
+  // Load cart from localStorage once on mount (client-side)
   useEffect(() => {
-    setHasMounted(true);
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("cartCount");
-      if (saved) {
-        setCartCount(parseInt(saved, 10));
+    if (typeof window === "undefined") return; // safeguard for SSR
+
+    const stored = localStorage.getItem(CART_STORAGE_KEY);
+    if (stored) {
+      try {
+        setCartItems(JSON.parse(stored));
+      } catch {
+        // ignore invalid JSON
+        setCartItems([]);
       }
     }
   }, []);
 
+  // Save cart to localStorage whenever it changes
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("cartCount", cartCount.toString());
-    }
-  }, [cartCount]);
+    if (typeof window === "undefined") return; // safeguard for SSR
 
-  const addToCart = () => {
-    setCartCount((prev) => prev + 1);
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+  }, [cartItems]);
+
+  // Add new item or increment quantity if it exists
+  const addToCart = (item: CartItem) => {
+    if (!item || typeof item.id === "undefined") return;
+
+    setCartItems(prev => {
+      const existing = prev.find(p => p.id === item.id);
+      if (existing) {
+        return prev.map(p =>
+          p.id === item.id
+            ? { ...p, quantity: p.quantity + item.quantity }
+            : p
+        );
+      }
+      return [...prev, item];
+    });
   };
 
-  if (!hasMounted) {
-    // Return null to avoid rendering on server and prevent hydration mismatch
-    return null;
-  }
+  // Remove item entirely from cart
+  const removeFromCart = (id: number) => {
+    setCartItems(prev => prev.filter(item => item.id !== id));
+  };
+
+  // Update quantity of an existing cart item
+  const updateQuantity = (id: number, quantity: number) => {
+    setCartItems(prev => {
+      if (quantity <= 0) {
+        // Remove item if quantity is zero or less
+        return prev.filter(item => item.id !== id);
+      }
+      return prev.map(item =>
+        item.id === id ? { ...item, quantity } : item
+      );
+    });
+  };
+
+  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ cartCount, addToCart }}>
+    <CartContext.Provider
+      value={{ cartItems, addToCart, removeFromCart, updateQuantity, cartCount }}
+    >
       {children}
     </CartContext.Provider>
   );
 };
+
+export const useCart = () => useContext(CartContext);
