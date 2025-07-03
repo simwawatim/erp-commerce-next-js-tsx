@@ -1,63 +1,62 @@
 import Link from "next/link";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useCart } from "../helpers/CartContext";
 
-const products = [
-  {
-    id: 1,
-    name: "Basic Tee",
-    color: "Black",
-    price: "$35",
-    imageSrc:
-      "https://tailwindcss.com/plus-assets/img/ecommerce-images/product-page-01-related-product-01.jpg",
-  },
-  {
-    id: 2,
-    name: "Crewneck Sweatshirt",
-    color: "Gray",
-    price: "$45",
-    imageSrc:
-      "https://tailwindcss.com/plus-assets/img/ecommerce-images/product-page-01-related-product-02.jpg",
-  },
-  {
-    id: 3,
-    name: "Sports Jacket",
-    color: "Navy",
-    price: "$75",
-    imageSrc:
-      "https://tailwindcss.com/plus-assets/img/ecommerce-images/product-page-01-related-product-03.jpg",
-  },
-  {
-    id: 4,
-    name: "Slim Fit Jeans",
-    color: "Blue",
-    price: "$60",
-    imageSrc:
-      "https://tailwindcss.com/plus-assets/img/ecommerce-images/product-page-01-related-product-04.jpg",
-  },
-  {
-    id: 5,
-    name: "Canvas Sneakers",
-    color: "White",
-    price: "$50",
-    imageSrc:
-      "https://tailwindcss.com/plus-assets/img/ecommerce-images/product-page-01-related-product-02.jpg",
-  },
-  {
-    id: 6,
-    name: "Baseball Cap",
-    color: "Green",
-    price: "$20",
-    imageSrc:
-      "https://tailwindcss.com/plus-assets/img/ecommerce-images/product-page-01-related-product-02.jpg",
-  },
-];
+interface Product {
+  id: number;
+  name: string;
+  color: string;
+  price: string;
+  imageSrc: string;
+}
+
+const PLACEHOLDER_IMAGE = "/placeholder.png";
+
+const getImageUrl = (src?: string) => {
+  console.log(src);
+  if (!src) {
+    console.log("Image src missing. Using placeholder.");
+    return PLACEHOLDER_IMAGE;
+  }
+
+  const finalUrl = src.startsWith("http")
+    ? src
+    : `http://127.0.0.1:8000${src}`;
+
+  console.log("Constructed image URL:", finalUrl);
+  return finalUrl;
+};
 
 const CustomerHome = () => {
-  // Simulate a buy action
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>("");
+
+  const { addToCart } = useCart();
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/products");
+        if (!res.ok) throw new Error("Failed to fetch products");
+        const data = await res.json();
+        setProducts(data);
+      } catch (err: any) {
+        setError(err.message || "Something went wrong");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   const handleBuy = (productName: string) => {
     alert(`Buying "${productName}"...`);
-    // You can replace this with actual API call or route change logic
   };
+
+  if (loading) return <p className="text-center mt-10">Loading products...</p>;
+  if (error) return <p className="text-center mt-10 text-red-500">{error}</p>;
 
   return (
     <div className="bg-white">
@@ -67,7 +66,7 @@ const CustomerHome = () => {
             <div key={product.id} className="group relative">
               <Link href={`/customer/product-view`} passHref>
                 <img
-                  src={product.imageSrc}
+                  src={getImageUrl(product.imageSrc)}
                   alt={`Image of ${product.name}`}
                   className="aspect-square w-full rounded-md bg-gray-200 object-cover group-hover:opacity-75 lg:h-80 cursor-pointer"
                 />
@@ -93,7 +92,10 @@ const CustomerHome = () => {
 
                 <button
                   className="flex-1 rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-200 transition"
-                  onClick={() => alert(`Added ${product.name} to cart`)}
+                  onClick={() => {
+                    addToCart();
+                    alert(`Added ${product.name} to cart`);
+                  }}
                 >
                   Add to Cart
                 </button>

@@ -1,8 +1,11 @@
 import React, { useState } from "react";
-import { ShoppingCart } from "lucide-react"; // Optional icon library (can replace with SVG)
+import Link from "next/link";
+import { ShoppingCart } from "lucide-react"; // Optional icon library
+import { useCart } from "../customer/helpers/CartContext";
 
 const CustomerDashboard = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { cartCount } = useCart();
 
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
   const closeDropdown = () => setDropdownOpen(false);
@@ -17,7 +20,8 @@ const CustomerDashboard = () => {
               type="button"
               className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
               aria-controls="mobile-menu"
-              aria-            >
+              aria-expanded="false"
+            >
               <span className="sr-only">Open main menu</span>
               <svg
                 className="block h-6 w-6"
@@ -41,52 +45,29 @@ const CustomerDashboard = () => {
             <div className="flex flex-shrink-0 items-center">
               <a href="/customer/dashboard">
                 <img
-                className="h-8 w-auto"
-                src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
-                alt="Company Logo"
-              />
+                  className="h-8 w-auto"
+                  src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
+                  alt="Company Logo"
+                />
               </a>
-            </div>
-            <div className="hidden sm:ml-6 sm:block">
-              {/* <div className="flex space-x-4">
-                <a
-                  href="#"
-                  className="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Dashboard
-                </a>
-                <a
-                  href="#"
-                  className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Team
-                </a>
-                <a
-                  href="#"
-                  className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Projects
-                </a>
-                <a
-                  href="#"
-                  className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Calendar
-                </a>
-              </div> */}
             </div>
           </div>
 
           {/* Right-side icons */}
           <div className="absolute inset-y-0 right-0 flex items-center gap-4 pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
             {/* Shopping Cart */}
-            <button className="relative p-1 text-gray-400 hover:text-white">
-              <span className="sr-only">View cart</span>
-              <ShoppingCart className="h-6 w-6" />
-              <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold text-red-100 bg-red-600 rounded-full">
-                3
-              </span>
-            </button>
+            <Link href="/customer/cart" passHref>
+              <button
+                className="relative p-1 text-gray-400 hover:text-white"
+                type="button"
+              >
+                <span className="sr-only">View cart</span>
+                <ShoppingCart className="h-6 w-6" />
+                <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold text-red-100 bg-red-600 rounded-full">
+                  {cartCount}
+                </span>
+              </button>
+            </Link>
 
             {/* Profile Dropdown */}
             <div className="relative">
@@ -142,7 +123,7 @@ const CustomerDashboard = () => {
         </div>
       </div>
 
-      {/* Mobile menu (optional – not wired to toggle logic yet) */}
+      {/* Mobile menu (optional) */}
       <div className="sm:hidden" id="mobile-menu">
         <div className="space-y-1 px-2 pt-2 pb-3">
           <a
