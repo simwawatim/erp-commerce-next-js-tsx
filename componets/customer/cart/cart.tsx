@@ -1,8 +1,18 @@
-import React from "react";
+"use client";
+
+import React, { useRef, useState } from "react";
 import { useCart } from "../helpers/CartContext";
+import Swal from "sweetalert2";
+import { useRouter } from "next/navigation";
 
 const Cart = () => {
-  const { cartItems, removeFromCart, updateQuantity } = useCart();
+  const { cartItems, removeFromCart, updateQuantity, clearCart } = useCart();
+
+  const nameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const addressRef = useRef<HTMLTextAreaElement>(null);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const subtotal = cartItems.reduce(
     (total, item) => total + item.price * item.quantity,
@@ -19,6 +29,74 @@ const Cart = () => {
 
   const handleIncrement = (itemId: number, currentQty: number) => {
     updateQuantity(itemId, currentQty + 1);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (cartItems.length === 0) {
+      Swal.fire("Cart is empty", "Add items before checking out", "warning");
+      return;
+    }
+
+    setLoading(true);
+
+    const payload = {
+      name: nameRef.current?.value,
+      email: emailRef.current?.value,
+      address: addressRef.current?.value,
+      items: cartItems.map((item) => ({
+        product_id: item.id,
+        quantity: item.quantity,
+      })),
+    };
+
+    try {
+      const response = await fetch("http://localhost:8000/api/buy/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        Swal.fire({
+          title: "Order Submitted!",
+          text: data.message || "Thank you for your purchase.",
+          icon: "success",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        clearCart();
+
+        setTimeout(() => {
+          router.push("/customer/dashboard");
+        }, 2000);
+      } else {
+        const errorText =
+          typeof data.error === "string"
+            ? data.error
+            : Object.values(data).flat().join("\n");
+
+        Swal.fire({
+          title: "Order Failed",
+          text: errorText || "An error occurred. Please check your inputs.",
+          icon: "error",
+        });
+      }
+    } catch (error: any) {
+      Swal.fire({
+        title: "Error",
+        text: error.message || "Something went wrong.",
+        icon: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -48,7 +126,6 @@ const Cart = () => {
                     <button
                       onClick={() => handleDecrement(item.id, item.quantity)}
                       className="rounded border px-2 py-1 text-gray-700 hover:bg-gray-200"
-                      aria-label={`Decrease quantity of ${item.name}`}
                     >
                       -
                     </button>
@@ -56,7 +133,6 @@ const Cart = () => {
                     <button
                       onClick={() => handleIncrement(item.id, item.quantity)}
                       className="rounded border px-2 py-1 text-gray-700 hover:bg-gray-200"
-                      aria-label={`Increase quantity of ${item.name}`}
                     >
                       +
                     </button>
@@ -85,9 +161,6 @@ const Cart = () => {
           <p className="text-base font-medium text-gray-900">
             Subtotal: K{subtotal.toFixed(2)}
           </p>
-          <button className="rounded-md bg-indigo-600 px-6 py-3 text-base font-medium text-white hover:bg-indigo-700">
-            Checkout
-          </button>
         </div>
 
         <p className="mb-6 text-sm text-gray-500">
@@ -95,7 +168,7 @@ const Cart = () => {
         </p>
 
         {/* Checkout Form */}
-        <form className="space-y-4">
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
             <label
               htmlFor="name"
@@ -104,9 +177,11 @@ const Cart = () => {
               Full Name
             </label>
             <input
+              ref={nameRef}
               type="text"
               id="name"
               name="name"
+              required
               className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               placeholder="John Doe"
             />
@@ -120,9 +195,11 @@ const Cart = () => {
               Email Address
             </label>
             <input
+              ref={emailRef}
               type="email"
               id="email"
               name="email"
+              required
               className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               placeholder="john@example.com"
             />
@@ -136,24 +213,33 @@ const Cart = () => {
               Shipping Address
             </label>
             <textarea
+              ref={addressRef}
               id="address"
               name="address"
               rows={3}
+              required
               className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               placeholder="123 Main St, City, Country"
             />
           </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-md bg-indigo-600 px-6 py-3 text-base font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {loading ? "Processing..." : "Submit Order"}
+          </button>
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-500">
           <p>
             or{" "}
             <a href="/customer/dashboard">
-                <button className="font-medium text-indigo-600 hover:text-indigo-500">
-                    Continue Shopping &rarr;
-                </button>
+              <button className="font-medium text-indigo-600 hover:text-indigo-500">
+                Continue Shopping →
+              </button>
             </a>
-            
           </p>
         </div>
       </div>
