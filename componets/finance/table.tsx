@@ -14,7 +14,7 @@ const FinanceTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const rowsPerPage = 5;
+  const rowsPerPage = 10;
 
   const fetchFinancialData = async () => {
     setLoading(true);
@@ -22,12 +22,16 @@ const FinanceTable = () => {
     try {
       const response = await axios.get<Transaction[]>('http://127.0.0.1:8000/api/financial-transactions/');
       setFinancialData(response.data);
-    } catch (err) {
+    } 
+    catch (err) {
       setError('Failed to load financial transactions.');
       console.error(err);
-    } finally {
+    }
+    
+    finally {
       setLoading(false);
     }
+    
   };
 
   useEffect(() => {
@@ -45,7 +49,6 @@ const FinanceTable = () => {
     }
   };
 
-  // Format currency in Zambian Kwacha
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW' }).format(amount);
 
@@ -68,8 +71,6 @@ const FinanceTable = () => {
   };
 
   const getAmountColor = (amount: number) => (amount >= 0 ? 'text-green-600' : 'text-red-600');
-
-  // DELETE handler
   const handleDelete = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this transaction?')) return;
     try {
