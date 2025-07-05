@@ -20,7 +20,7 @@ const SalesTable = () => {
   const [salesData, setSalesData] = React.useState<Sale[]>([]);
   const [products, setProducts] = React.useState<Product[]>([]);
   const [currentPage, setCurrentPage] = React.useState(1);
-  const rowsPerPage = 5;
+  const rowsPerPage = 10;
 
   const [isAddModalOpen, setIsAddModalOpen] = React.useState(false);
   const [newSale, setNewSale] = React.useState({
