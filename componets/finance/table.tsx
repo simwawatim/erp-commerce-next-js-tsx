@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface Transaction {
   id: number;
   description: string;
-  amount: number;
-  module: string; // assuming this maps to your "category"
+  amount: number | string;
+  module: string;
   timestamp: string;
 }
 
@@ -22,16 +25,12 @@ const FinanceTable = () => {
     try {
       const response = await axios.get<Transaction[]>('http://127.0.0.1:8000/api/financial-transactions/');
       setFinancialData(response.data);
-    } 
-    catch (err) {
+    } catch (err) {
       setError('Failed to load financial transactions.');
       console.error(err);
-    }
-    
-    finally {
+    } finally {
       setLoading(false);
     }
-    
   };
 
   useEffect(() => {
@@ -49,37 +48,46 @@ const FinanceTable = () => {
     }
   };
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW' }).format(amount);
+  const formatCurrency = (amount: number | string) =>
+    new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW' }).format(Number(amount));
 
-  const getStatusBadge = (status: string) => {
-    const statusClasses: Record<string, string> = {
-      Completed: 'bg-green-100 text-green-800',
-      Processed: 'bg-blue-100 text-blue-800',
-      Pending: 'bg-yellow-100 text-yellow-800',
-      Cancelled: 'bg-red-100 text-red-800',
-    };
-    return (
-      <span
-        className={`text-xs px-2 py-1 rounded-full ${
-          statusClasses[status] || 'bg-gray-100 text-gray-800'
-        }`}
-      >
-        {status}
-      </span>
-    );
+  const getAmountColor = (amount: number | string) =>
+    Number(amount) >= 0 ? 'text-green-600' : 'text-red-600';
+
+  // ✅ Export to Excel
+  const exportToExcel = () => {
+    const data = financialData.map(transaction => ({
+      Date: new Date(transaction.timestamp).toLocaleDateString(),
+      Description: transaction.description,
+      Module: transaction.module,
+      Amount: Number(transaction.amount).toFixed(2),
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Financial Transactions');
+
+    XLSX.writeFile(workbook, 'financial_transactions.xlsx');
   };
 
-  const getAmountColor = (amount: number) => (amount >= 0 ? 'text-green-600' : 'text-red-600');
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this transaction?')) return;
-    try {
-      await axios.delete(`http://127.0.0.1:8000/api/financial-transactions/${id}/`);
-      fetchFinancialData();
-    } catch (err) {
-      alert('Failed to delete transaction.');
-      console.error(err);
-    }
+  // ✅ Export to PDF
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text('Financial Transactions', 14, 16);
+
+    autoTable(doc, {
+      startY: 20,
+      head: [['Date', 'Description', 'Module', 'Amount']],
+      body: financialData.map(t => [
+        new Date(t.timestamp).toLocaleDateString(),
+        t.description,
+        t.module,
+        Number(t.amount).toFixed(2),
+      ]),
+      theme: 'striped',
+    });
+
+    doc.save('financial_transactions.pdf');
   };
 
   if (loading) {
@@ -95,11 +103,17 @@ const FinanceTable = () => {
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-slate-800">Financial Transactions</h2>
         <div className="flex space-x-2">
-          <button className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
-            Export
+          <button
+            onClick={exportToExcel}
+            className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+          >
+            Export to Excel
           </button>
-          <button className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600">
-            New Transaction
+          <button
+            onClick={exportToPDF}
+            className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Export to PDF
           </button>
         </div>
       </div>
@@ -111,40 +125,25 @@ const FinanceTable = () => {
             <th className="p-4 text-left text-sm font-semibold text-slate-900">Description</th>
             <th className="p-4 text-left text-sm font-semibold text-slate-900">Module</th>
             <th className="p-4 text-left text-sm font-semibold text-slate-900">Amount</th>
-            <th className="p-4 text-left text-sm font-semibold text-slate-900">Actions</th>
           </tr>
         </thead>
         <tbody className="whitespace-nowrap">
           {currentRows.length === 0 ? (
             <tr>
-              <td colSpan={5} className="p-4 text-center text-gray-500">
+              <td colSpan={4} className="p-4 text-center text-gray-500">
                 No financial transactions found.
               </td>
             </tr>
           ) : (
             currentRows.map((transaction) => (
               <tr key={transaction.id} className="hover:bg-gray-50">
-                <td className="p-4 text-slate-600">{new Date(transaction.timestamp).toLocaleDateString()}</td>
+                <td className="p-4 text-slate-600">
+                  {new Date(transaction.timestamp).toLocaleDateString()}
+                </td>
                 <td className="p-4 text-slate-900 font-medium">{transaction.description}</td>
                 <td className="p-4 text-slate-600">{transaction.module}</td>
                 <td className={`p-4 font-medium ${getAmountColor(transaction.amount)}`}>
                   {formatCurrency(transaction.amount)}
-                </td>
-                <td className="p-4 flex space-x-2">
-                  <button
-                    onClick={() => handleDelete(transaction.id)}
-                    className="text-red-500 hover:text-red-700"
-                    title="Delete"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M7 21q-.825 0-1.412-.587Q5 19.825 5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413Q17.825 21 17 21ZM17 6H7v13h10ZM9 17h2V8H9Zm4 0h2V8h-2ZM7 6v13Z" />
-                    </svg>
-                  </button>
                 </td>
               </tr>
             ))
