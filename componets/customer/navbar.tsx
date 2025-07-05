@@ -1,14 +1,62 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "../customer/helpers/CartContext";
+
+const dummyData = [
+  "Apple",
+  "Banana",
+  "Cherry",
+  "Date",
+  "Elderberry",
+  "Fig",
+  "Grape",
+  "Honeydew",
+];
 
 const CustomerDashboard = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { cartCount } = useCart();
 
+  // Search states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showResults, setShowResults] = useState(false);
+
+  // Ref for detecting outside clicks on search area
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowResults(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
   const closeDropdown = () => setDropdownOpen(false);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setShowResults(true);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Search submitted:", searchTerm);
+    setShowResults(false);
+    // Add navigation or other logic here if needed
+  };
+
+  const filteredResults = searchTerm
+    ? dummyData.filter((item) =>
+        item.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : dummyData; // show all if empty
 
   return (
     <nav className="sticky top-0 z-50 bg-gray-800">
@@ -27,7 +75,7 @@ const CustomerDashboard = () => {
                 className="block h-6 w-6"
                 fill="none"
                 viewBox="0 0 24 24"
-                strokeWidth="1.5"
+                strokeWidth={1.5}
                 stroke="currentColor"
                 aria-hidden="true"
               >
@@ -53,8 +101,45 @@ const CustomerDashboard = () => {
             </div>
           </div>
 
-          {/* Right-side icons */}
+          {/* Right-side icons + Search */}
           <div className="absolute inset-y-0 right-0 flex items-center gap-4 pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
+            {/* Search Form */}
+            <div className="relative hidden sm:flex" ref={searchRef}>
+              <form onSubmit={handleSearchSubmit}>
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  onFocus={() => setShowResults(true)}
+                  placeholder="Search..."
+                  className="rounded-md border border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none px-3 py-1 text-sm w-64 sm:w-80"
+                  autoComplete="off"
+                />
+              </form>
+
+              {/* Search Results Dropdown */}
+              {showResults && (
+                <ul className="absolute top-full mt-1 max-h-48 w-64 sm:w-80 overflow-auto rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
+                  {filteredResults.length > 0 ? (
+                    filteredResults.map((item) => (
+                      <li
+                        key={item}
+                        className="cursor-pointer px-3 py-2 text-gray-900 hover:bg-indigo-600 hover:text-white"
+                        onMouseDown={() => {
+                          setSearchTerm(item);
+                          setShowResults(false);
+                        }}
+                      >
+                        {item}
+                      </li>
+                    ))
+                  ) : (
+                    <li className="px-3 py-2 text-gray-500">No results found.</li>
+                  )}
+                </ul>
+              )}
+            </div>
+
             {/* Shopping Cart */}
             <Link href="/customer/cart" passHref>
               <button
