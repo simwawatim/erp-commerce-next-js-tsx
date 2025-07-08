@@ -52,7 +52,7 @@ const Cart = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:8000/api/buy/", {
+      const response = await fetch("http://127.0.0.1:8000/api/buy/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -63,6 +63,21 @@ const Cart = () => {
       const data = await response.json();
 
       if (response.ok) {
+        // Feed AI training data
+        await fetch("http://127.0.0.1:8000/ai/api/feed/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            products: cartItems.map((item) => ({
+              id: item.id,
+              name: item.name,
+              sales: [item.quantity],
+            })),
+          }),
+        });
+
         Swal.fire({
           title: "Order Submitted!",
           text: data.message || "Thank you for your purchase.",

@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { useCart } from "../helpers/CartContext";
+import { useRouter } from "next/navigation";
 
 interface Product {
   id: number;
@@ -31,7 +34,8 @@ const CustomerHome = () => {
   const [error, setError] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  const { addToCart } = useCart();
+  const { addToCart, clearCart } = useCart();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -73,7 +77,7 @@ const CustomerHome = () => {
 
   const handleSearchSelect = (name: string) => {
     setSearchQuery(name);
-    setPredictions([]); // hide dropdown after selecting
+    setPredictions([]);
   };
 
   const filteredProducts = products.filter((product) =>
@@ -86,7 +90,7 @@ const CustomerHome = () => {
   return (
     <div className="bg-white">
       <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 lg:max-w-7xl lg:px-8">
-        {/* 🔍 Search Bar + Dropdown */}
+        {/* 🔍 Search Bar */}
         <div className="relative mb-8">
           <input
             type="text"
@@ -146,12 +150,27 @@ const CustomerHome = () => {
                 </div>
 
                 <div className="mt-4 flex gap-2">
+                  {/* Buy Button */}
                   <button
                     className="flex-1 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition"
+                    onClick={() => {
+                      if (product.quantity && product.quantity > 0) {
+                        clearCart(); // Clear previous items
+                        addToCart({
+                          id: product.id,
+                          name: product.name,
+                          price: parseFloat(product.cost_per_unit),
+                          quantity: 1,
+                          imageSrc: getImageUrl(product.imageSrc),
+                        });
+                        router.push("/customer/cart"); // Redirect to cart
+                      }
+                    }}
                   >
                     Buy
                   </button>
 
+                  {/* Add to Cart Button */}
                   <button
                     disabled={!product.quantity || product.quantity < 1}
                     className={`flex-1 px-3 py-2 text-sm font-medium transition rounded-md ${

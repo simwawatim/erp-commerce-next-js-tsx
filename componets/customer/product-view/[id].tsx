@@ -1,21 +1,23 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { useCart } from "../helpers/CartContext"; // Adjust path as needed
+import { useCart } from "../helpers/CartContext"; // Adjust path if needed
 
 const ProductViewComponent = () => {
   const router = useRouter();
   const { id } = router.query;
-  const { addToCart } = useCart();
+
+  const { addToCart, clearCart } = useCart();
 
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-const PLACEHOLDER_IMAGE = "/placeholder.png";
+  const PLACEHOLDER_IMAGE = "/placeholder.png";
 
   const getImageUrl = (src?: string) => {
-  if (!src) return PLACEHOLDER_IMAGE;
-  return src.startsWith("http") ? src : `http://127.0.0.1:8000${src}`;
-};
+    if (!src) return PLACEHOLDER_IMAGE;
+    return src.startsWith("http") ? src : `http://127.0.0.1:8000${src}`;
+  };
+
   useEffect(() => {
     if (!id) return;
 
@@ -49,10 +51,10 @@ const PLACEHOLDER_IMAGE = "/placeholder.png";
           {/* Product Image */}
           <div className="w-full">
             <img
-              src={`http://127.0.0.1:8000${product.imageSrc}`}
+              src={getImageUrl(product.imageSrc)}
               alt={product.name}
               onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = "/placeholder.png";
+                (e.currentTarget as HTMLImageElement).src = PLACEHOLDER_IMAGE;
               }}
               className="w-full h-[500px] object-cover rounded-xl border border-gray-200 shadow-sm"
             />
@@ -81,13 +83,14 @@ const PLACEHOLDER_IMAGE = "/placeholder.png";
 
             {/* Buttons */}
             <div className="flex gap-4 mt-6">
+              {/* Add to Cart */}
               <button
                 disabled={!product.quantity || product.quantity < 1}
-                className={`flex-1 px-3 py-2 text-sm font-medium transition rounded-md
-                  {!product.quantity || product.quantity < 1
+                className={`flex-1 px-3 py-2 text-sm font-medium transition rounded-md ${
+                  !product.quantity || product.quantity < 1
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-gray-100 text-gray-800 hover:bg-gray-200 cursor-pointer"
-                  }`}
+                    : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                }`}
                 onClick={() => {
                   if (product.quantity && product.quantity >= 1) {
                     addToCart({
@@ -103,10 +106,24 @@ const PLACEHOLDER_IMAGE = "/placeholder.png";
                 Add to Cart
               </button>
 
+              {/* Buy Now */}
               <button
-                className="w-1/2 rounded-lg px-4 py-3 text-sm font-medium bg-gray-600 text-white hover:bg-green-700 transition"
+                className="flex-1 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition"
+                onClick={() => {
+                  if (product.quantity && product.quantity > 0) {
+                    clearCart();
+                    addToCart({
+                      id: product.id,
+                      name: product.name,
+                      price: parseFloat(product.cost_per_unit),
+                      quantity: 1,
+                      imageSrc: getImageUrl(product.imageSrc),
+                    });
+                    router.push("/customer/cart");
+                  }
+                }}
               >
-                Buy Now
+                Buy
               </button>
             </div>
           </div>

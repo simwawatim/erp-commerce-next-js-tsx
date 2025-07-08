@@ -103,42 +103,7 @@ const CustomerDashboard = () => {
 
           {/* Right-side icons + Search */}
           <div className="absolute inset-y-0 right-0 flex items-center gap-4 pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-            {/* Search Form */}
-            <div className="relative hidden sm:flex" ref={searchRef}>
-              <form onSubmit={handleSearchSubmit}>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  onFocus={() => setShowResults(true)}
-                  placeholder="Search..."
-                  className="rounded-md border border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none px-3 py-1 text-sm w-64 sm:w-80"
-                  autoComplete="off"
-                />
-              </form>
-
-              {/* Search Results Dropdown */}
-              {showResults && (
-                <ul className="absolute top-full mt-1 max-h-48 w-64 sm:w-80 overflow-auto rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
-                  {filteredResults.length > 0 ? (
-                    filteredResults.map((item) => (
-                      <li
-                        key={item}
-                        className="cursor-pointer px-3 py-2 text-gray-900 hover:bg-indigo-600 hover:text-white"
-                        onMouseDown={() => {
-                          setSearchTerm(item);
-                          setShowResults(false);
-                        }}
-                      >
-                        {item}
-                      </li>
-                    ))
-                  ) : (
-                    <li className="px-3 py-2 text-gray-500">No results found.</li>
-                  )}
-                </ul>
-              )}
-            </div>
+           
 
             {/* Shopping Cart */}
             <Link href="/customer/cart" passHref>
@@ -155,7 +120,7 @@ const CustomerDashboard = () => {
             </Link>
 
             {/* Profile Dropdown */}
-            <div className="relative">
+            {/* <div className="relative">
               <button
                 onClick={toggleDropdown}
                 className="flex rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
@@ -203,7 +168,7 @@ const CustomerDashboard = () => {
                   </a>
                 </div>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
