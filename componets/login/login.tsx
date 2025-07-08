@@ -88,7 +88,24 @@ const LoginForm: React.FC = () => {
                 {loading ? "Signing in..." : "Sign in"}
               </button>
             </form>
+            <div className="text-center text-sm mt-4 text-slate-600 space-y-2">
+              <p>
+                Don't have an account?{" "}
+                <a href="/customer/register" className="text-blue-600 hover:underline font-medium">
+                  Sign up
+                </a>
+              </p>
+              <p>
+                Or just want to{" "}
+                <a href="/customer/dashboard" className="text-blue-600 hover:underline font-medium">
+                  Shop
+                </a>
+                {" "}without signing up
+              </p>
+            </div>
+
           </div>
+          
 
           <div className="max-md:mt-8">
             <img

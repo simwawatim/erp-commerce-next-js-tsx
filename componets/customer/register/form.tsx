@@ -94,12 +94,22 @@ const RegisterForm: React.FC = () => {
                 {loading ? "Registering..." : "Register"}
               </button>
 
-              <p className="text-center text-sm mt-4 text-slate-600">
+              <div className="text-center text-sm mt-4 text-slate-600 space-y-2">
+              <p>
                 Already have an account?{" "}
                 <Link href="/login" className="text-blue-600 hover:underline font-medium">
                   Sign in
                 </Link>
               </p>
+              <p>
+                Or just want to{" "}
+                <a href="/customer/dashboard" className="text-blue-600 hover:underline font-medium">
+                  Shop
+                </a>{" "}
+                without signing up
+              </p>
+            </div>
+
             </form>
           </div>
 
