@@ -91,84 +91,35 @@ const CustomerDashboard = () => {
           {/* Logo & Navigation Links */}
           <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
             <div className="flex flex-shrink-0 items-center">
-              <a href="/customer/dashboard">
+              <Link href="/customer/dashboard" className="block">
                 <img
                   className="h-8 w-auto"
                   src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
                   alt="Company Logo"
                 />
-              </a>
+              </Link>
             </div>
           </div>
 
           {/* Right-side icons + Search */}
           <div className="absolute inset-y-0 right-0 flex items-center gap-4 pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-           
-
             {/* Shopping Cart */}
-            <Link href="/customer/cart" passHref>
-              <button
-                className="relative p-1 text-gray-400 hover:text-white"
-                type="button"
-              >
-                <span className="sr-only">View cart</span>
-                <ShoppingCart className="h-6 w-6" />
-                <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold text-red-100 bg-red-600 rounded-full">
-                  {cartCount}
-                </span>
-              </button>
+            <Link href="/customer/cart" className="relative p-1 text-gray-400 hover:text-white" aria-label="View cart">
+              <ShoppingCart className="h-6 w-6" />
+              <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold text-red-100 bg-red-600 rounded-full">
+                {cartCount}
+              </span>
             </Link>
 
-            {/* Profile Dropdown */}
-            {/* <div className="relative">
-              <button
-                onClick={toggleDropdown}
-                className="flex rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
-                id="user-menu-button"
-                aria-expanded={dropdownOpen}
-              >
-                <span className="sr-only">Open user menu</span>
-                <img
-                  className="h-8 w-8 rounded-full"
-                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e"
-                  alt="User avatar"
-                />
-              </button>
+            {/* Login Button */}
+            <Link
+              href="/login"
+              className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              Login
+            </Link>
 
-              {dropdownOpen && (
-                <div
-                  className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 py-1"
-                  role="menu"
-                  aria-orientation="vertical"
-                  aria-labelledby="user-menu-button"
-                >
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700"
-                    role="menuitem"
-                    onClick={closeDropdown}
-                  >
-                    Your Profile
-                  </a>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700"
-                    role="menuitem"
-                    onClick={closeDropdown}
-                  >
-                    Settings
-                  </a>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700"
-                    role="menuitem"
-                    onClick={closeDropdown}
-                  >
-                    Sign out
-                  </a>
-                </div>
-              )}
-            </div> */}
+            {/* Profile Dropdown (commented out) */}
           </div>
         </div>
       </div>
