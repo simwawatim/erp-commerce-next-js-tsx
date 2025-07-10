@@ -34,36 +34,25 @@ const LoginForm: React.FC = () => {
       // Save tokens to localStorage
       if (data.access) localStorage.setItem("token", data.access);
       if (data.refresh) localStorage.setItem("refreshToken", data.refresh);
+      if (data.user?.role) {
+        const role = data.user.role.toUpperCase();
+        localStorage.setItem("role", role);
+      }
+
 
       const role = data?.user?.role?.toUpperCase() || "UNKNOWN";
 
       console.log("Login successful. Role:", role);
 
       switch (role) {
-        case "MANUFACTURING":
-          router.push("/employee/manufacturing");
-          break;
-        case "SERVICE":
-          router.push("/employee/service");
-          break;
-        case "HR":
-          router.push("/employee/hr");
-          break;
-        case "FINANCE":
-          router.push("/employee/finance");
-          break;
-        case "SALES":
-          router.push("/employee/sales");
-          break;
-        case "ADMIN":
-          router.push("/admin/dashboard");
-          break;
-        case "CUSTOMER":
-          router.push("/customer/dashboard");
-          break;
-        default:
-          router.push("/customer/dashboard");
-      }
+      case "UNKNOWN":
+        router.push("/customer/dashboard");
+        break;
+      default:
+        router.push("/");
+        break;
+    }
+
     } catch (error: any) {
       setErrorMsg(error?.response?.data?.error || "Login failed.");
     } finally {

@@ -9,7 +9,7 @@ const Header = () => {
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
   useEffect(() => {
-    const access = localStorage.getItem("access");
+    const access = localStorage.getItem("token");
     if (!access) {
       router.push("/login");
       return;
