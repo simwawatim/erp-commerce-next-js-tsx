@@ -1,15 +1,24 @@
+"use client";
+
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 
 interface RegisterFormFields {
   username: string;
   email: string;
   password: string;
+  name: string;
+  address: string;
 }
 
 interface RegisterFormEvent extends React.FormEvent<HTMLFormElement> {}
 
 const RegisterForm: React.FC = () => {
+  const router = useRouter();
+
+  const [firstName, setFirstName] = useState<string>("");
+  const [lastName, setLastName] = useState<string>("");
   const [username, setUsername] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -21,12 +30,33 @@ const RegisterForm: React.FC = () => {
     setLoading(true);
     setErrorMsg("");
 
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    const formData: RegisterFormFields = {
+      username,
+      email,
+      password,
+      name: fullName,
+      address: "",
+    };
+
     try {
-      const formData: RegisterFormFields = { username, email, password };
-      console.log("Registering:", formData);
-      // TODO: Replace with real API call & error handling
+      const response = await fetch("http://localhost:8000/api/register/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        router.push("/login");
+      } else {
+        const data = await response.json();
+        setErrorMsg(data?.detail || "Registration failed.");
+      }
     } catch (error) {
-      setErrorMsg("Registration failed. Please try again.");
+      setErrorMsg("Something went wrong. Please try again.");
     }
 
     setLoading(false);
@@ -46,6 +76,30 @@ const RegisterForm: React.FC = () => {
               </div>
 
               <div>
+                <label className="text-slate-800 text-sm font-medium mb-2 block">First Name</label>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  className="w-full text-sm border border-slate-300 pl-4 pr-4 py-3 rounded-lg outline-blue-600"
+                  placeholder="Enter your first name"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-800 text-sm font-medium mb-2 block">Last Name</label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                  className="w-full text-sm border border-slate-300 pl-4 pr-4 py-3 rounded-lg outline-blue-600"
+                  placeholder="Enter your last name"
+                />
+              </div>
+
+              <div>
                 <label className="text-slate-800 text-sm font-medium mb-2 block">Username</label>
                 <input
                   name="username"
@@ -53,7 +107,7 @@ const RegisterForm: React.FC = () => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
-                  className="w-full text-sm text-slate-800 border border-slate-300 pl-4 pr-4 py-3 rounded-lg outline-blue-600"
+                  className="w-full text-sm border border-slate-300 pl-4 pr-4 py-3 rounded-lg outline-blue-600"
                   placeholder="Enter your username"
                 />
               </div>
@@ -66,7 +120,7 @@ const RegisterForm: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full text-sm text-slate-800 border border-slate-300 pl-4 pr-4 py-3 rounded-lg outline-blue-600"
+                  className="w-full text-sm border border-slate-300 pl-4 pr-4 py-3 rounded-lg outline-blue-600"
                   placeholder="Enter your email"
                 />
               </div>
@@ -79,7 +133,7 @@ const RegisterForm: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full text-sm text-slate-800 border border-slate-300 pl-4 pr-4 py-3 rounded-lg outline-blue-600"
+                  className="w-full text-sm border border-slate-300 pl-4 pr-4 py-3 rounded-lg outline-blue-600"
                   placeholder="Enter your password"
                 />
               </div>
@@ -95,21 +149,20 @@ const RegisterForm: React.FC = () => {
               </button>
 
               <div className="text-center text-sm mt-4 text-slate-600 space-y-2">
-              <p>
-                Already have an account?{" "}
-                <Link href="/login" className="text-blue-600 hover:underline font-medium">
-                  Sign in
-                </Link>
-              </p>
-              <p>
-                Or just want to{" "}
-                <a href="/customer/dashboard" className="text-blue-600 hover:underline font-medium">
-                  Shop
-                </a>{" "}
-                without signing up
-              </p>
-            </div>
-
+                <p>
+                  Already have an account?{" "}
+                  <Link href="/login" className="text-blue-600 hover:underline font-medium">
+                    Sign in
+                  </Link>
+                </p>
+                <p>
+                  Or just want to{" "}
+                  <a href="/customer/dashboard" className="text-blue-600 hover:underline font-medium">
+                    Shop
+                  </a>{" "}
+                  without signing up
+                </p>
+              </div>
             </form>
           </div>
 

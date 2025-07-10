@@ -18,11 +18,24 @@ const CustomerDashboard = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { cartCount } = useCart();
 
+  // Track if user is logged in based on token presence
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check token on mount
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
+  }, []);
+
+  // Logout handler
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setIsLoggedIn(false);
+  };
+
   // Search states
   const [searchTerm, setSearchTerm] = useState("");
   const [showResults, setShowResults] = useState(false);
-
-  // Ref for detecting outside clicks on search area
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -111,15 +124,22 @@ const CustomerDashboard = () => {
               </span>
             </Link>
 
-            {/* Login Button */}
-            <Link
-              href="/login"
-              className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              Login
-            </Link>
-
-            {/* Profile Dropdown (commented out) */}
+            {/* Conditionally show Login or Logout button */}
+            {isLoggedIn ? (
+              <button
+                onClick={handleLogout}
+                className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              >
+                Logout
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                Login
+              </Link>
+            )}
           </div>
         </div>
       </div>

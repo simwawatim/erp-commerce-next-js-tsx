@@ -1,8 +1,7 @@
 "use client";
-import React, { useState } from "react";
-import { loginUser } from "../../api/services/login/login";
-import { useRouter } from "next/navigation";
 
+import React, { useState } from "react";
+import { useRouter } from "next/router";
 
 const LoginForm: React.FC = () => {
   const [username, setUsername] = useState("");
@@ -17,11 +16,56 @@ const LoginForm: React.FC = () => {
     setErrorMsg("");
 
     try {
-      const data = await loginUser(username, password);
-      console.log("Login successful:", data);
-      router.push("/");
+      const response = await fetch("http://localhost:8000/api/auth/login/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw { response: { data: errorData } };
+      }
+
+      const data = await response.json();
+
+      // Save tokens to localStorage
+      if (data.access) localStorage.setItem("token", data.access);
+      if (data.refresh) localStorage.setItem("refreshToken", data.refresh);
+
+      const role = data?.user?.role?.toUpperCase() || "UNKNOWN";
+
+      console.log("Login successful. Role:", role);
+
+      switch (role) {
+        case "MANUFACTURING":
+          router.push("/employee/manufacturing");
+          break;
+        case "SERVICE":
+          router.push("/employee/service");
+          break;
+        case "HR":
+          router.push("/employee/hr");
+          break;
+        case "FINANCE":
+          router.push("/employee/finance");
+          break;
+        case "SALES":
+          router.push("/employee/sales");
+          break;
+        case "ADMIN":
+          router.push("/admin/dashboard");
+          break;
+        case "CUSTOMER":
+          router.push("/customer/dashboard");
+          break;
+        default:
+          router.push("/customer/dashboard");
+      }
     } catch (error: any) {
-      setErrorMsg(error.response?.data?.error || "Login failed.");
+      setErrorMsg(error?.response?.data?.error || "Login failed.");
     } finally {
       setLoading(false);
     }
@@ -88,6 +132,7 @@ const LoginForm: React.FC = () => {
                 {loading ? "Signing in..." : "Sign in"}
               </button>
             </form>
+
             <div className="text-center text-sm mt-4 text-slate-600 space-y-2">
               <p>
                 Don't have an account?{" "}
@@ -99,13 +144,11 @@ const LoginForm: React.FC = () => {
                 Or just want to{" "}
                 <a href="/customer/dashboard" className="text-blue-600 hover:underline font-medium">
                   Shop
-                </a>
-                {" "}without signing up
+                </a>{" "}
+                without signing up
               </p>
             </div>
-
           </div>
-          
 
           <div className="max-md:mt-8">
             <img

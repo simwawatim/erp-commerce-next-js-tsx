@@ -1,23 +1,60 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useCart } from "../helpers/CartContext";
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
 
 const Cart = () => {
   const { cartItems, removeFromCart, updateQuantity, clearCart } = useCart();
-
   const nameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const addressRef = useRef<HTMLTextAreaElement>(null);
   const [loading, setLoading] = useState(false);
+  const [customerExists, setCustomerExists] = useState(false);
+  const [customerInfo, setCustomerInfo] = useState({
+    name: "",
+    email: "",
+    address: "",
+  });
+
   const router = useRouter();
 
   const subtotal = cartItems.reduce(
     (total, item) => total + item.price * item.quantity,
     0
   );
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      console.log("✅ Token found:", token);
+
+      fetch("http://127.0.0.1:8000/api/customer/", {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error("Customer not found");
+          return res.json();
+        })
+        .then((data) => {
+          setCustomerExists(true);
+          setCustomerInfo(data);
+        })
+        .catch((err) => {
+          console.warn("Customer fetch failed:", err.message);
+          setCustomerExists(false);
+        });
+    } else {
+      console.warn("⚠️ No token found in localStorage");
+    }
+  }, []);
 
   const handleDecrement = (itemId: number, currentQty: number) => {
     if (currentQty <= 1) {
@@ -42,9 +79,11 @@ const Cart = () => {
     setLoading(true);
 
     const payload = {
-      name: nameRef.current?.value,
-      email: emailRef.current?.value,
-      address: addressRef.current?.value,
+      name: customerExists ? customerInfo.name : nameRef.current?.value,
+      email: customerExists ? customerInfo.email : emailRef.current?.value,
+      address: customerExists
+        ? customerInfo.address
+        : addressRef.current?.value,
       items: cartItems.map((item) => ({
         product_id: item.id,
         quantity: item.quantity,
@@ -56,6 +95,7 @@ const Cart = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(payload),
       });
@@ -63,7 +103,6 @@ const Cart = () => {
       const data = await response.json();
 
       if (response.ok) {
-        // Feed AI training data
         await fetch("http://127.0.0.1:8000/ai/api/feed/", {
           method: "POST",
           headers: {
@@ -113,6 +152,12 @@ const Cart = () => {
       setLoading(false);
     }
   };
+
+  // Check if all customer info fields are non-empty strings
+  const allCustomerInfoPresent =
+    customerInfo.name.trim() !== "" &&
+    customerInfo.email.trim() !== "" &&
+    customerInfo.address.trim() !== "";
 
   return (
     <div className="flex max-w-7xl mx-auto p-6 gap-8">
@@ -197,8 +242,12 @@ const Cart = () => {
               id="name"
               name="name"
               required
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              disabled={customerExists}
+              className={`mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm ${
+                customerExists ? "bg-gray-100 cursor-not-allowed" : ""
+              }`}
               placeholder="John Doe"
+              defaultValue={customerInfo.name}
             />
           </div>
 
@@ -215,8 +264,12 @@ const Cart = () => {
               id="email"
               name="email"
               required
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              disabled={customerExists}
+              className={`mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm ${
+                customerExists ? "bg-gray-100 cursor-not-allowed" : ""
+              }`}
               placeholder="john@example.com"
+              defaultValue={customerInfo.email}
             />
           </div>
 
@@ -233,8 +286,12 @@ const Cart = () => {
               name="address"
               rows={3}
               required
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              disabled={customerExists}
+              className={`mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm ${
+                customerExists ? "bg-gray-100 cursor-not-allowed" : ""
+              }`}
               placeholder="123 Main St, City, Country"
+              defaultValue={customerInfo.address}
             />
           </div>
 
