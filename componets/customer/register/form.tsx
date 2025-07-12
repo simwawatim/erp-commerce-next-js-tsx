@@ -22,13 +22,13 @@ const RegisterForm: React.FC = () => {
   const [username, setUsername] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [errorMsg, setErrorMsg] = useState<string>("");
+  const [errorMsgs, setErrorMsgs] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
   const handleRegister = async (e: RegisterFormEvent): Promise<void> => {
     e.preventDefault();
     setLoading(true);
-    setErrorMsg("");
+    setErrorMsgs([]);
 
     const fullName = `${firstName} ${lastName}`.trim();
 
@@ -53,10 +53,23 @@ const RegisterForm: React.FC = () => {
         router.push("/login");
       } else {
         const data = await response.json();
-        setErrorMsg(data?.detail || "Registration failed.");
+
+        if (typeof data === "object" && !Array.isArray(data)) {
+          const messages: string[] = [];
+          for (const [field, msgs] of Object.entries(data)) {
+            if (Array.isArray(msgs)) {
+              messages.push(...msgs.map((m) => `${field}: ${m}`));
+            } else {
+              messages.push(`${field}: ${msgs}`);
+            }
+          }
+          setErrorMsgs(messages);
+        } else {
+          setErrorMsgs(["Registration failed."]);
+        }
       }
     } catch (error) {
-      setErrorMsg("Something went wrong. Please try again.");
+      setErrorMsgs(["Something went wrong. Please try again."]);
     }
 
     setLoading(false);
@@ -138,7 +151,13 @@ const RegisterForm: React.FC = () => {
                 />
               </div>
 
-              {errorMsg && <p className="text-red-500 text-sm">{errorMsg}</p>}
+              {errorMsgs.length > 0 && (
+                <ul className="text-red-500 text-sm space-y-1">
+                  {errorMsgs.map((msg, i) => (
+                    <li key={i}>{msg}</li>
+                  ))}
+                </ul>
+              )}
 
               <button
                 type="submit"

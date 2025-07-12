@@ -9,7 +9,7 @@ interface Product {
   id: number;
   name: string;
   cost_per_unit: string;
-  imageSrc: string;
+  image: string | null;
   quantity?: number;
   predicted_sales?: number;
 }
@@ -22,7 +22,7 @@ interface Prediction {
 
 const PLACEHOLDER_IMAGE = "/placeholder.png";
 
-const getImageUrl = (src?: string) => {
+const getImageUrl = (src?: string | null) => {
   if (!src) return PLACEHOLDER_IMAGE;
   return src.startsWith("http") ? src : `http://127.0.0.1:8000${src}`;
 };
@@ -126,7 +126,7 @@ const CustomerHome = () => {
               <div key={product.id} className="group relative">
                 <Link href={`/customer/product-view/${product.id}`}>
                   <img
-                    src={getImageUrl(product.imageSrc)}
+                    src={getImageUrl(product.image)}
                     alt={`Image of ${product.name}`}
                     className="aspect-square w-full rounded-md bg-gray-200 object-cover group-hover:opacity-75 lg:h-80 cursor-pointer"
                     onError={(e) => {
@@ -155,15 +155,15 @@ const CustomerHome = () => {
                     className="flex-1 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition"
                     onClick={() => {
                       if (product.quantity && product.quantity > 0) {
-                        clearCart(); // Clear previous items
+                        clearCart();
                         addToCart({
                           id: product.id,
                           name: product.name,
                           price: parseFloat(product.cost_per_unit),
                           quantity: 1,
-                          imageSrc: getImageUrl(product.imageSrc),
+                          imageSrc: getImageUrl(product.image),
                         });
-                        router.push("/customer/cart"); // Redirect to cart
+                        router.push("/customer/cart");
                       }
                     }}
                   >
@@ -185,7 +185,7 @@ const CustomerHome = () => {
                           name: product.name,
                           price: parseFloat(product.cost_per_unit),
                           quantity: 1,
-                          imageSrc: getImageUrl(product.imageSrc),
+                          imageSrc: getImageUrl(product.image),
                         });
                       }
                     }}

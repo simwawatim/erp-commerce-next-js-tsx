@@ -1,3 +1,5 @@
+"use client";
+
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useCart } from "../helpers/CartContext"; // Adjust path if needed
@@ -13,7 +15,7 @@ const ProductViewComponent = () => {
 
   const PLACEHOLDER_IMAGE = "/placeholder.png";
 
-  const getImageUrl = (src?: string) => {
+  const getImageUrl = (src?: string | null) => {
     if (!src) return PLACEHOLDER_IMAGE;
     return src.startsWith("http") ? src : `http://127.0.0.1:8000${src}`;
   };
@@ -51,7 +53,7 @@ const ProductViewComponent = () => {
           {/* Product Image */}
           <div className="w-full">
             <img
-              src={getImageUrl(product.imageSrc)}
+              src={getImageUrl(product.image)}
               alt={product.name}
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).src = PLACEHOLDER_IMAGE;
@@ -98,7 +100,7 @@ const ProductViewComponent = () => {
                       name: product.name,
                       price: parseFloat(product.cost_per_unit),
                       quantity: 1,
-                      imageSrc: getImageUrl(product.imageSrc),
+                      imageSrc: getImageUrl(product.image),
                     });
                   }
                 }}
@@ -117,7 +119,7 @@ const ProductViewComponent = () => {
                       name: product.name,
                       price: parseFloat(product.cost_per_unit),
                       quantity: 1,
-                      imageSrc: getImageUrl(product.imageSrc),
+                      imageSrc: getImageUrl(product.image),
                     });
                     router.push("/customer/cart");
                   }
