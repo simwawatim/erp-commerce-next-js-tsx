@@ -90,14 +90,7 @@ const SideNav = () => {
                   <span>Finance</span>
                 </a>
               </li>
-              <li>
-                <a
-                  href="/payroll"
-                  className="text-slate-800 font-medium hover:text-slate-900 hover:bg-gray-200 text-[15px] flex items-center rounded px-4 py-2 transition-all"
-                >
-                  <span>Salary</span>
-                </a>
-              </li>
+              
             </>
           )}
 
