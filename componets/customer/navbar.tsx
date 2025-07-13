@@ -23,7 +23,8 @@ const CustomerDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [userMessage, setUserMessage] = useState("");
-  const [botResponse, setBotResponse] = useState("");
+  const [chatHistory, setChatHistory] = useState<{ sender: "user" | "bot"; text: string }[]>([]);
+  const [isThinking, setIsThinking] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,7 +44,6 @@ const CustomerDashboard = () => {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Search submitted:", searchTerm);
     setShowResults(false);
   };
 
@@ -55,6 +55,11 @@ const CustomerDashboard = () => {
 
   const sendMessage = async () => {
     if (!userMessage.trim()) return;
+
+    const newHistory = [...chatHistory, { sender: "user", text: userMessage }];
+    setChatHistory(newHistory);
+    setIsThinking(true);
+
     try {
       const res = await fetch("http://127.0.0.1:8000/api/chat/", {
         method: "POST",
@@ -63,11 +68,20 @@ const CustomerDashboard = () => {
         },
         body: JSON.stringify({ message: userMessage }),
       });
+
       const data = await res.json();
-      setBotResponse(data.response);
+      const botReply = data.response || "Sorry, I couldn't understand that.";
+
+      setChatHistory([...newHistory, { sender: "bot", text: botReply }]);
     } catch (error) {
-      setBotResponse("Sorry, something went wrong.");
+      setChatHistory([
+        ...newHistory,
+        { sender: "bot", text: "Sorry, something went wrong." },
+      ]);
     }
+
+    setUserMessage("");
+    setIsThinking(false);
   };
 
   useEffect(() => {
@@ -173,30 +187,67 @@ const CustomerDashboard = () => {
 
       {/* Chatbot Panel */}
       {showChatbot && (
-        <div className="fixed bottom-4 right-4 w-80 max-w-full bg-white border border-gray-300 rounded-lg shadow-xl z-50">
-          <div className="flex justify-between items-center p-3 border-b">
-            <h3 className="text-sm font-semibold text-gray-700">FAQ Chatbot</h3>
-            <button onClick={() => setShowChatbot(false)} className="text-gray-500 hover:text-red-500">✕</button>
+        <div className="fixed bottom-4 right-4 w-80 max-w-full bg-white border border-gray-300 rounded-lg shadow-xl z-50 flex flex-col h-[450px]">
+          {/* Header */}
+          <div className="flex justify-between items-center p-3 border-b bg-gray-100 rounded-t-lg">
+            <h3 className="text-sm font-semibold text-gray-700">💬 FAQ Chatbot</h3>
+            <button
+              onClick={() => setShowChatbot(false)}
+              className="text-gray-500 hover:text-red-500 text-lg"
+            >
+              ✕
+            </button>
           </div>
-          <div className="p-3 text-sm text-gray-700 space-y-2">
+
+          {/* Chat History */}
+          <div className="flex-1 overflow-y-auto p-3 space-y-2 text-sm">
+            {chatHistory.length === 0 && (
+              <div className="bg-gray-100 p-2 rounded text-gray-700 text-xs text-center">
+                👋 Welcome! Ask me anything about your account or services.
+              </div>
+            )}
+
+            {chatHistory.map((msg, index) => (
+              <div
+                key={index}
+                className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`px-3 py-2 rounded-lg max-w-[80%] ${
+                    msg.sender === "user"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-900"
+                  }`}
+                >
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+
+            {isThinking && (
+              <div className="flex justify-start">
+                <div className="bg-gray-100 text-gray-600 px-3 py-2 rounded-lg text-xs italic">
+                  Thinking...
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Input area */}
+          <div className="p-3 border-t bg-white">
             <input
               type="text"
               value={userMessage}
               onChange={(e) => setUserMessage(e.target.value)}
               placeholder="Type your question..."
-              className="w-full p-2 text-sm border rounded"
+              className="w-full p-2 text-sm border border-gray-300 rounded mb-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
             <button
               onClick={sendMessage}
-              className="w-full px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+              className="w-full px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
             >
               Send
             </button>
-            {botResponse && (
-              <div className="mt-2 p-2 border rounded bg-gray-50 text-gray-800">
-                <strong>Bot:</strong> {botResponse}
-              </div>
-            )}
           </div>
         </div>
       )}
