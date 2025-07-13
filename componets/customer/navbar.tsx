@@ -56,7 +56,10 @@ const CustomerDashboard = () => {
   const sendMessage = async () => {
     if (!userMessage.trim()) return;
 
-    const newHistory = [...chatHistory, { sender: "user", text: userMessage }];
+    const newHistory = [
+      ...chatHistory,
+      { sender: "user" as const, text: userMessage }
+    ];
     setChatHistory(newHistory);
     setIsThinking(true);
 
@@ -72,7 +75,7 @@ const CustomerDashboard = () => {
       const data = await res.json();
       const botReply = data.response || "Sorry, I couldn't understand that.";
 
-      setChatHistory([...newHistory, { sender: "bot", text: botReply }]);
+      setChatHistory([...newHistory, { sender: "bot" as const, text: botReply }]);
     } catch (error) {
       setChatHistory([
         ...newHistory,
