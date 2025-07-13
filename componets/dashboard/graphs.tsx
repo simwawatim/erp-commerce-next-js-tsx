@@ -1,101 +1,144 @@
-import React, { useEffect, useState } from 'react';
+import React from "react";
+import { Bar } from "react-chartjs-2";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from 'recharts';
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { DollarSign, Users, Ban } from "lucide-react";
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('en-ZM', {
-    style: 'currency',
-    currency: 'ZMW',
-    minimumFractionDigits: 0,
-  }).format(value);
+const hrData = {
+  labels: ["Jan", "Feb", "Mar", "Apr", "May"],
+  datasets: [
+    {
+      label: "Employees",
+      data: [50, 52, 55, 54, 56],
+      backgroundColor: "rgba(34,197,94,0.6)", // green
+    },
+  ],
+};
 
-interface CardData {
-  label: string;
-  value: number;
-}
+const salesData = {
+  labels: ["Jan", "Feb", "Mar", "Apr", "May"],
+  datasets: [
+    {
+      label: "Total Sales ($)",
+      data: [30000, 35000, 40000, 42000, 45200],
+      backgroundColor: "rgba(37,99,235,0.6)", // blue
+    },
+  ],
+};
 
-interface BarChartData {
-  name: string;
-  sales: number;
-}
+const financeData = {
+  labels: ["Jan", "Feb", "Mar", "Apr", "May"],
+  datasets: [
+    {
+      label: "Profit ($)",
+      data: [20000, 22000, 25000, 28000, 31300],
+      backgroundColor: "rgba(220,38,38,0.6)", // red
+    },
+    {
+      label: "Expenses ($)",
+      data: [10000, 11000, 12000, 13000, 13900],
+      backgroundColor: "rgba(244,63,94,0.6)", // lighter red
+    },
+  ],
+};
 
-const ProductSalesSection = () => {
-  const [data, setData] = useState<{
-    cards: CardData[];
-    barChart: BarChartData[];
-  } | null>(null);
+const options = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'top' as const,
+    },
+    title: {
+      display: false,
+    },
+  },
+};
 
-  useEffect(() => {
-    fetch('http://localhost:8000/api/product-sales-summary/')
-      .then((res) => res.json())
-      .then(setData)
-      .catch(console.error);
-  }, []);
-
-  if (!data) return <p>Loading...</p>;
-
+export default function Dashboard() {
   return (
-    <div className="max-w-7xl mx-auto p-6 mb-12">
-      <h2 className="text-3xl font-extrabold text-gray-900 mb-8">Products & Sales Overview</h2>
+    <div className="min-h-screen flex bg-gray-100">
+      <div className="flex-1 flex flex-col">
 
-      {/* Two cards side-by-side */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-        {data.cards.slice(0, 2).map(({ label, value }) => {
-          // Safe label for URL
-          const safeLabel = encodeURIComponent(label.trim() || 'Label');
-
-          return (
-            <div
-              key={label}
-              className="bg-white rounded-xl shadow-lg p-8 flex flex-col items-center justify-center hover:shadow-xl transition-shadow duration-300"
-            >
-              <h3 className="text-2xl font-semibold text-gray-700 mb-3">{label}</h3>
-              <p className="text-5xl font-bold text-indigo-600">{value}</p>
-              <div className="mt-5 w-full h-40 rounded-lg overflow-hidden">
-                <img
-                  src={`https://via.placeholder.com/400x200?text=${safeLabel}`}
-                  alt={label}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                  onError={(e) => {
-                    // fallback if image fails to load
-                    (e.currentTarget as HTMLImageElement).src = 'https://via.placeholder.com/400x200?text=Image+Not+Found';
-                  }}
-                />
-              </div>
+        {/* HR Section */}
+        <main className="p-6 space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="bg-white p-6 rounded-xl shadow hover:shadow-md transition">
+              <p className="text-gray-500">Employees</p>
+              <h2 className="text-2xl font-bold text-green-600">56</h2>
             </div>
-          );
-        })}
-      </div>
+            <div className="bg-white p-6 rounded-xl shadow hover:shadow-md transition">
+              <p className="text-gray-500">On Leave</p>
+              <h2 className="text-2xl font-bold text-yellow-600">3</h2>
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow hover:shadow-md transition">
+              <p className="text-gray-500">New Hires</p>
+              <h2 className="text-2xl font-bold text-green-600">5</h2>
+            </div>
+          </div>
 
-      {/* Full-width bar chart */}
-      <div className="bg-white rounded-xl shadow-lg p-8">
-        <h3 className="text-2xl font-semibold text-gray-700 mb-6">Quarterly Sales</h3>
-        <ResponsiveContainer width="100%" height={400}>
-          <BarChart
-            data={data.barChart}
-            margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis dataKey="name" tick={{ fill: '#6b7280', fontWeight: '600' }} />
-            <YAxis
-              tickFormatter={formatCurrency}
-              tick={{ fill: '#6b7280', fontWeight: '600' }}
-            />
-            <Tooltip
-              formatter={(value: number) => formatCurrency(value)}
-              contentStyle={{ backgroundColor: '#f9fafb', borderRadius: '8px', borderColor: '#d1d5db' }}
-              labelStyle={{ fontWeight: 'bold', color: '#374151' }}
-            />
-            <Bar dataKey="sales" fill={COLORS[0]} radius={[5, 5, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+          <div className="bg-white p-6 rounded-xl shadow" style={{ height: 220 }}>
+            <h3 className="text-lg font-semibold text-gray-700 mb-4">HR Monthly Overview</h3>
+            <Bar options={options} data={hrData} />
+          </div>
+        </main>
+
+        {/* Sales Section */}
+        <main className="p-6 space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="bg-white p-6 rounded-xl shadow hover:shadow-md transition">
+              <p className="text-gray-500">Total Sales</p>
+              <h2 className="text-2xl font-bold text-blue-600">$45,200</h2>
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow hover:shadow-md transition">
+              <p className="text-gray-500">Orders</p>
+              <h2 className="text-2xl font-bold text-blue-600">320</h2>
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow hover:shadow-md transition">
+              <p className="text-gray-500">Pending</p>
+              <h2 className="text-2xl font-bold text-yellow-600">14</h2>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow" style={{ height: 220 }}>
+            <h3 className="text-lg font-semibold text-gray-700 mb-4">Sales Monthly Overview</h3>
+            <Bar options={options} data={salesData} />
+          </div>
+        </main>
+
+        {/* Finance Section */}
+        <main className="p-6 space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="bg-white p-6 rounded-xl shadow hover:shadow-md transition">
+              <p className="text-gray-500">Expenses</p>
+              <h2 className="text-2xl font-bold text-red-600">$13,900</h2>
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow hover:shadow-md transition">
+              <p className="text-gray-500">Profit</p>
+              <h2 className="text-2xl font-bold text-green-600">$31,300</h2>
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow hover:shadow-md transition">
+              <p className="text-gray-500">Budget Left</p>
+              <h2 className="text-2xl font-bold text-purple-600">$10,000</h2>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow" style={{ height: 220 }}>
+            <h3 className="text-lg font-semibold text-gray-700 mb-4">Finance Monthly Overview</h3>
+            <Bar options={options} data={financeData} />
+          </div>
+        </main>
+
       </div>
     </div>
   );
-};
-
-export default ProductSalesSection;
+}

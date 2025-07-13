@@ -1,7 +1,7 @@
 
 import Header from '../../componets/header';
 import SideNav from '../../componets/side-nav';
-import CorporateDashboard from "../../componets/dashboard/graphs"
+import Dashboard from "../../componets/dashboard/graphs"
 export default function Home() {
   return (
         <div className="flex flex-col h-screen">
@@ -17,7 +17,7 @@ export default function Home() {
 
                 {/* Main Content */}
                 <main className="flex-1 p-6 bg-white overflow-y-auto">
-                    <CorporateDashboard/>
+                    <Dashboard/>
                 </main>
             </div>
         </div>
