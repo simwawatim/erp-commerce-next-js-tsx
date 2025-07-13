@@ -1,19 +1,26 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import { logoutUser } from "../api/services/base-url";
 
 const SideNav = () => {
   const [role, setRole] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedRole = localStorage.getItem("role");
-      setRole(storedRole);
-    }
-  }, []);
 
-  if (role === null) {
-    return null;
-  }
+      if (!storedRole) {
+        router.push("/login");
+      } else {
+        setRole(storedRole);
+      }
+    }
+  }, [router]);
+
+  if (role === null) return null;
 
   return (
     <nav className="bg-[#f7f7f8] h-screen fixed top-0 left-0 min-w-[250px] py-6 px-4">
@@ -25,7 +32,6 @@ const SideNav = () => {
             className="w-[150px]"
           />
         </a>
-
         <div className="absolute -right-6 top-1 h-6 w-6 p-[6px] cursor-pointer bg-[#007bff] flex items-center justify-center rounded-full">
           {/* Collapse button can be added here */}
         </div>
@@ -95,7 +101,6 @@ const SideNav = () => {
             </>
           )}
 
-          {/* HR also sees Salary if not already shown via Finance */}
           {role === "HR" && (
             <li>
               <a
@@ -121,7 +126,7 @@ const SideNav = () => {
               href="#"
               onClick={(e) => {
                 e.preventDefault();
-                logoutUser();
+                logoutUser(); // You might want to clear localStorage and redirect here too
               }}
               className="text-slate-800 font-medium hover:text-slate-900 hover:bg-gray-200 text-[15px] flex items-center rounded px-4 py-2 transition-all"
             >
