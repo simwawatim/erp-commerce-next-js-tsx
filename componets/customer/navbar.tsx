@@ -131,10 +131,11 @@ const CustomerDashboard = () => {
               <div className="flex flex-shrink-0 items-center">
                 <Link href="/customer/dashboard" className="block">
                   <img
-                    className="h-8 w-auto"
-                    src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
+                    className="h-12 w-auto object-contain rounded-md shadow-sm"
+                    src="/logo.jpg"
                     alt="Company Logo"
                   />
+
                 </Link>
               </div>
             </div>
