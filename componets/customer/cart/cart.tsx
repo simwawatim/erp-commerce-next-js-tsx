@@ -31,7 +31,7 @@ const Cart = () => {
     if (token) {
       console.log("✅ Token found:", token);
 
-      fetch("http://127.0.0.1:8000/api/customer/", {
+      fetch("https://uat.pythonanywhere.com/api/customer/", {
         method: "GET",
         credentials: "include",
         headers: {
@@ -91,7 +91,7 @@ const Cart = () => {
     };
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/buy/", {
+      const response = await fetch("https://uat.pythonanywhere.com/api/buy/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -103,7 +103,7 @@ const Cart = () => {
       const data = await response.json();
 
       if (response.ok) {
-        await fetch("http://127.0.0.1:8000/ai/api/feed/", {
+        await fetch("https://uat.pythonanywhere.com/ai/api/feed/", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

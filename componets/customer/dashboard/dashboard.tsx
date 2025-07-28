@@ -24,7 +24,7 @@ const PLACEHOLDER_IMAGE = "/placeholder.png";
 
 const getImageUrl = (src?: string | null) => {
   if (!src) return PLACEHOLDER_IMAGE;
-  return src.startsWith("http") ? src : `http://127.0.0.1:8000${src}`;
+  return src.startsWith("http") ? src : `https://uat.pythonanywhere.com${src}`;
 };
 
 const CustomerHome = () => {
@@ -41,7 +41,7 @@ const CustomerHome = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const productRes = await fetch("http://127.0.0.1:8000/api/products");
+        const productRes = await fetch("https://uat.pythonanywhere.com/api/products");
         if (!productRes.ok) throw new Error("Failed to fetch products");
         const productsData = await productRes.json();
         setProducts(productsData);
@@ -63,7 +63,7 @@ const CustomerHome = () => {
       }
 
       try {
-        const res = await fetch("http://127.0.0.1:8000/ai/api/predict/");
+        const res = await fetch("https://uat.pythonanywhere.com/ai/api/predict/");
         if (!res.ok) throw new Error("Failed to fetch predictions");
         const data = await res.json();
         setPredictions(data.predictions || []);

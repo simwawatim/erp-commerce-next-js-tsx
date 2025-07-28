@@ -17,7 +17,7 @@ const ProductViewComponent = () => {
 
   const getImageUrl = (src?: string | null) => {
     if (!src) return PLACEHOLDER_IMAGE;
-    return src.startsWith("http") ? src : `http://127.0.0.1:8000${src}`;
+    return src.startsWith("http") ? src : `https://uat.pythonanywhere.com${src}`;
   };
 
   useEffect(() => {
@@ -25,7 +25,7 @@ const ProductViewComponent = () => {
 
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/products/${id}`);
+        const res = await fetch(`https://uat.pythonanywhere.com/api/products/${id}`);
         if (!res.ok) throw new Error("Product not found");
         const data = await res.json();
         setProduct(data);
