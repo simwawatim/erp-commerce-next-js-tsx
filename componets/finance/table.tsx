@@ -23,7 +23,7 @@ const FinanceTable = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get<Transaction[]>('http://127.0.0.1:8000/api/financial-transactions/');
+      const response = await axios.get<Transaction[]>('https://uat.pythonanywhere.com/api/financial-transactions/');
       setFinancialData(response.data);
     } catch (err) {
       setError('Failed to load financial transactions.');

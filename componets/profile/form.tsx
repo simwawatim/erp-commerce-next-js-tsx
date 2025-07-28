@@ -65,7 +65,7 @@ const ProfileForm = () => {
           lastName: data.last_name,
           email: data.email,
           profilePictureUrl: data.employee?.profile_picture
-            ? `http://127.0.0.1:8000/${data.employee.profile_picture}`
+            ? `https://uat.pythonanywhere.com/${data.employee.profile_picture}`
             : '',
         }));
       })
@@ -118,7 +118,7 @@ const ProfileForm = () => {
 
     try {
       const response = await axios.patch(
-        `http://127.0.0.1:8000/api/profile/${userId}/`,
+        `https://uat.pythonanywhere.com/api/profile/${userId}/`,
         submission,
         {
           headers: {

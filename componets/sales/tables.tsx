@@ -29,7 +29,7 @@ const SalesTable = () => {
 
   const fetchSalesRecords = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/api/sales-orders/');
+      const response = await axios.get('https://uat.pythonanywhere.com/api/sales-orders/');
       if (Array.isArray(response.data)) {
         const simplifiedData: Sale[] = response.data.map((item: any) => ({
           id: item.id,
@@ -50,7 +50,7 @@ const SalesTable = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/api/products/');
+      const response = await axios.get('https://uat.pythonanywhere.com/api/products/');
       setProducts(response.data || []);
     } catch (error) {
       console.error('Error fetching products:', error);

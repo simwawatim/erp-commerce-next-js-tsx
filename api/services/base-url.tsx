@@ -4,7 +4,7 @@ import axios from "axios";
 
 // Create an Axios instance
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:8000",
+  baseURL: "https://uat.pythonanywhere.com",
 });
 
 // Request interceptor to attach token or redirect to login

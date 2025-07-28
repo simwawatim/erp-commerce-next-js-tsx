@@ -16,7 +16,7 @@ const LoginForm: React.FC = () => {
     setErrorMsg("");
 
     try {
-      const response = await fetch("http://localhost:8000/api/auth/login/", {
+      const response = await fetch("https://uat.pythonanywhere.com/api/auth/login/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -139,13 +139,19 @@ const LoginForm: React.FC = () => {
             </div>
           </div>
 
-          <div className="max-md:mt-8">
+         <div className="relative max-md:mt-8 w-full max-md:w-4/5 mx-auto">
+
+            <div className="max-md:mt-8 text-center">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Welcome to iLap Electronics</h2>
             <img
               src="login-image.webp"
               className="w-full aspect-[71/50] max-md:w-4/5 mx-auto block object-cover"
               alt="login"
             />
           </div>
+
+          </div>
+
         </div>
       </div>
     </div>

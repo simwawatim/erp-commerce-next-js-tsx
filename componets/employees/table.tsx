@@ -57,7 +57,7 @@ const EmployeesTable = () => {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const res = await axios.get<Employee[]>('http://127.0.0.1:8000/api/employees/');
+      const res = await axios.get<Employee[]>('https://uat.pythonanywhere.com/api/employees/');
       const data = res.data;
       setEmployees(data);
       setTotalPages(Math.ceil(data.length / rowsPerPage));
@@ -70,7 +70,7 @@ const EmployeesTable = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/employees/${id}/`);
+      await axios.delete(`https://uat.pythonanywhere.com/api/employees/${id}/`);
       fetchEmployees();
     } catch (err) {
       console.error('Delete failed', err);
@@ -79,7 +79,7 @@ const EmployeesTable = () => {
 
   const handleUpdate = async (emp: Employee) => {
     try {
-      await axios.put(`http://127.0.0.1:8000/api/employees/${emp.id}/`, {
+      await axios.put(`https://uat.pythonanywhere.com/api/employees/${emp.id}/`, {
         user: {
           username: emp.user.username,
           first_name: emp.user.first_name,
@@ -103,7 +103,7 @@ const EmployeesTable = () => {
         return;
       }
 
-      await axios.post('http://127.0.0.1:8000/api/employees/', {
+      await axios.post('https://uat.pythonanywhere.com/api/employees/', {
         user: {
           username,
           first_name,

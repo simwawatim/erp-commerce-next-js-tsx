@@ -43,7 +43,7 @@ const ProductsTable = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await axios.get<Product[]>('http://127.0.0.1:8000/api/products/');
+      const response = await axios.get<Product[]>('https://uat.pythonanywhere.com/api/products/');
       if (Array.isArray(response.data)) {
         const startIndex = (currentPage - 1) * rowsPerPage;
         const paginatedProducts = response.data.slice(startIndex, startIndex + rowsPerPage);
@@ -64,7 +64,7 @@ const ProductsTable = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/products/${id}/`);
+      await axios.delete(`https://uat.pythonanywhere.com/api/products/${id}/`);
       await fetchProducts();
     } catch (error) {
       console.error('Error deleting product:', error);
@@ -73,7 +73,7 @@ const ProductsTable = () => {
 
   const handleUpdate = async (product: Product) => {
     try {
-      const response = await axios.put(`http://127.0.0.1:8000/api/products/${product.id}/`, product);
+      const response = await axios.put(`https://uat.pythonanywhere.com/api/products/${product.id}/`, product);
       setProducts(products.map(p => (p.id === product.id ? response.data : p)));
       setEditingProduct(null);
     } catch (error) {
@@ -99,7 +99,7 @@ const ProductsTable = () => {
         formData.append('image', newProduct.image);
       }
 
-      await axios.post('http://127.0.0.1:8000/api/products/', formData, {
+      await axios.post('https://uat.pythonanywhere.com/api/products/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -182,10 +182,10 @@ const ProductsTable = () => {
               <tr key={product.id} className="hover:bg-gray-100">
                 <td className="p-3 align-middle">
                   <img
-                    src={product.image ? `http://127.0.0.1:8000${product.image}` : PLACEHOLDER_IMAGE}
+                    src={product.image ? `https://uat.pythonanywhere.com${product.image}` : PLACEHOLDER_IMAGE}
                     alt={product.name}
                     className="w-12 h-12 rounded object-cover cursor-pointer"
-                    onClick={() => setModalImage(product.image ? `http://127.0.0.1:8000${product.image}` : PLACEHOLDER_IMAGE)}
+                    onClick={() => setModalImage(product.image ? `https://uat.pythonanywhere.com${product.image}` : PLACEHOLDER_IMAGE)}
                     onError={e => ((e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE)}
                   />
                 </td>

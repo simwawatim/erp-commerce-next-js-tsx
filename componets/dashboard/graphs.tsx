@@ -61,17 +61,17 @@ export default function Dashboard() {
   useEffect(() => {
     // Only fetch data if role exists and is valid
     if (role && ["ADMIN", "HR", "SALES", "FINANCE"].includes(role)) {
-      fetch("http://127.0.0.1:8000/api/employee-summary/")
+      fetch("https://uat.pythonanywhere.com/api/employee-summary/")
         .then((res) => res.json())
         .then(setEmployeeSummary)
         .catch((err) => console.error("Failed to fetch employee summary:", err));
 
-      fetch("http://127.0.0.1:8000/api/sales-summary/")
+      fetch("https://uat.pythonanywhere.com/api/sales-summary/")
         .then((res) => res.json())
         .then(setSalesSummary)
         .catch((err) => console.error("Failed to fetch sales summary:", err));
 
-      fetch("http://127.0.0.1:8000/api/finance-summary/")
+      fetch("https://uat.pythonanywhere.com/api/finance-summary/")
         .then((res) => res.json())
         .then(setFinanceSummary)
         .catch((err) => console.error("Failed to fetch finance summary:", err));
